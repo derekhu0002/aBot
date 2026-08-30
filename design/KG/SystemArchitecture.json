@@ -1,0 +1,112 @@
+{
+  "name": "System",
+  "description": "Exported from EA package System",
+  "elements": [
+    {
+      "id": "1240",
+      "name": "Application Cooperation Viewpoint",
+      "alias": "1211",
+      "type": "Grouping",
+      "subdiagram_views": [
+        {
+          "view_id": "169",
+          "view_name": "Application Cooperation"
+        }
+      ]
+    },
+    {
+      "id": "1249",
+      "name": "Implementation and Migration Viewpoint",
+      "alias": "1211",
+      "type": "Grouping",
+      "subdiagram_views": [
+        {
+          "view_id": "176",
+          "view_name": "AgentCapabilities"
+        },
+        {
+          "view_id": "174",
+          "view_name": "Implementation and Migration"
+        }
+      ]
+    },
+    {
+      "id": "project-overseer-001",
+      "name": "项目总管",
+      "alias": "project-overseer-001",
+      "type": "Business Actor",
+      "description": "ArchGraph/aBot 项目总管：负责项目全局目标、长期记忆维护、角色协调与验收把关。稳定身份 project-overseer-001。",
+      "subdiagram_views": [
+        {
+          "view_id": "overseer-ltm-001",
+          "view_name": "项目总管长期记忆"
+        }
+      ]
+    },
+    {
+      "id": "overseer-vision-001",
+      "name": "为 AGENT 提供长期记忆系统",
+      "type": "Goal",
+      "description": "北极星目标：打造世界级最优秀的 AGENT 长期记忆系统。目标=读写的极致（读取/写入方便高效）；架构化存储是实现手段。"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "1161",
+      "statement": "Implementation and Migration Viewpoint --(Association)--> Application Cooperation Viewpoint",
+      "name": "Association",
+      "type": "Association",
+      "source_id": "1249",
+      "target_id": "1240",
+      "source_name": "Implementation and Migration Viewpoint",
+      "target_name": "Application Cooperation Viewpoint"
+    }
+  ],
+  "views": [
+    {
+      "view_id": "176",
+      "view_name": "AgentCapabilities",
+      "parent_element_id": "1249",
+      "parent_element_name": "Implementation and Migration Viewpoint",
+      "included_elements": [],
+      "included_relationships": []
+    },
+    {
+      "view_id": "174",
+      "view_name": "Implementation and Migration",
+      "parent_element_id": "1249",
+      "parent_element_name": "Implementation and Migration Viewpoint",
+      "included_elements": [],
+      "included_relationships": []
+    },
+    {
+      "view_id": "169",
+      "view_name": "Application Cooperation",
+      "parent_element_id": "1240",
+      "parent_element_name": "Application Cooperation Viewpoint",
+      "included_elements": [],
+      "included_relationships": []
+    },
+    {
+      "view_id": "170",
+      "view_name": "SystemArchitecture",
+      "included_elements": [
+        "1249",
+        "1240",
+        "project-overseer-001"
+      ],
+      "included_relationships": [
+        "1161"
+      ]
+    },
+    {
+      "view_id": "overseer-ltm-001",
+      "view_name": "项目总管长期记忆",
+      "parent_element_id": "project-overseer-001",
+      "description": "项目总管（project-overseer-001）的长期记忆子视图，挂载于 Actor 之下，承载历史工作信息。",
+      "included_elements": [
+        "overseer-vision-001"
+      ]
+    }
+  ]
+}
