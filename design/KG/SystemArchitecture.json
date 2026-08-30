@@ -51,23 +51,41 @@
       ]
     },
     {
-      "id": "overseer-vision-001",
-      "name": "为 AGENT 提供长期记忆系统",
-      "type": "Goal",
-      "description": "北极星目标：打造世界级最优秀的 AGENT 长期记忆系统。目标=读写的极致（读取/写入方便高效）；架构化存储是实现手段。"
-    },
-    {
       "id": "humanoid-model-001",
       "name": "Humanoid Character Model (Blender)",
       "alias": "humanoid-model-001",
       "type": "Artifact",
-      "description": "程序化生成的人形 3D 角色模型（Blender 5.1 无头 + bpy）。比例基于人体解剖、基元建模 + 细分曲面 + 平滑着色、皮肤/头发/眼睛/衣物材质、简易骨骼绑定（含 L/R 四肢骨架）。输出 .blend 与渲染预览图，二进制存于仓库。"
+      "description": "程序化生成的人形 3D 角色模型（Blender 5.1 无头 + bpy）。比例基于人体解剖、基元建模 + 细分曲面 + 平滑着色、皮肤/头发/眼睛/衣物材质、简易骨骼绑定（含 L/R 四肢骨架）。输出 .blend 与渲染预览图，二进制存于仓库。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "7e3f92b",
+          "description": "Humanoid model build; files: scripts/blender_humanoid/build_humanoid.py, assets/humanoid/humanoid.blend, assets/humanoid/preview_front.png, assets/humanoid/preview_3quarter.png"
+        },
+        {
+          "name": "file_paths",
+          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; scripts/blender_humanoid/build_humanoid.py"
+        }
+      ]
     },
     {
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "在 Blender 中构建人形角色的流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③无头渲染预览 ④提交登记。"
+      "description": "在 Blender 中构建人形角色的流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③无头渲染预览 ④提交登记。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "7e3f92b",
+          "description": "Process completed; Blender 5.1 headless + bpy, EEVEE render, basic armature with weight fallback."
+        }
+      ]
+    },
+    {
+      "id": "abot-vision-001",
+      "name": "aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
+      "type": "Goal",
+      "description": "aBot 北极星（2026-08-30 人类伙伴确认）：开发人形机器人。当前早期阶段，用 Blender 构建机器人数字孪生（演示真实机器人形态），在此之上探索机器人的软件与智能部分（运动控制/感知/LLM 智能）。注：『为 AGENT 提供长期记忆系统』是 ArchGraph 项目的北极星，非 aBot；aBot 可将 ArchGraph 长期记忆作为外部协同能力复用（机器人『大脑』的记忆层），但非 aBot 自身目标。"
     }
   ],
   "relationships": [
@@ -80,6 +98,16 @@
       "target_id": "1240",
       "source_name": "Implementation and Migration Viewpoint",
       "target_name": "Application Cooperation Viewpoint"
+    },
+    {
+      "id": "humanoid-model-serves-abot-vision",
+      "type": "Association",
+      "source_id": "humanoid-model-001",
+      "source_name": "Humanoid Character Model (Blender)",
+      "target_id": "abot-vision-001",
+      "target_name": "aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
+      "name": "数字孪生模型支撑 aBot 愿景",
+      "statement": "Humanoid Character Model (Blender) --(Association)--> aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索"
     }
   ],
   "views": [
@@ -125,9 +153,12 @@
       "parent_element_id": "project-overseer-001",
       "description": "项目总管（project-overseer-001）的长期记忆子视图，挂载于 Actor 之下，承载历史工作信息。",
       "included_elements": [
-        "overseer-vision-001",
         "humanoid-model-001",
-        "humanoid-build-001"
+        "humanoid-build-001",
+        "abot-vision-001"
+      ],
+      "included_relationships": [
+        "humanoid-model-serves-abot-vision"
       ]
     }
   ]
