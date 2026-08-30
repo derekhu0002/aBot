@@ -41,6 +41,13 @@
           "view_id": "overseer-ltm-001",
           "view_name": "项目总管长期记忆"
         }
+      ],
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "a6af208",
+          "description": "argo-init bootstrap + actor registration; files: design/KG/SystemArchitecture.json, aBot.feap, .argo/temp/neo4j-system-architecture-sync-state.json, .argo/temp/system-architecture-semantic-readiness.json"
+        }
       ]
     },
     {
@@ -48,6 +55,19 @@
       "name": "为 AGENT 提供长期记忆系统",
       "type": "Goal",
       "description": "北极星目标：打造世界级最优秀的 AGENT 长期记忆系统。目标=读写的极致（读取/写入方便高效）；架构化存储是实现手段。"
+    },
+    {
+      "id": "humanoid-model-001",
+      "name": "Humanoid Character Model (Blender)",
+      "alias": "humanoid-model-001",
+      "type": "Artifact",
+      "description": "程序化生成的人形 3D 角色模型（Blender 5.1 无头 + bpy）。比例基于人体解剖、基元建模 + 细分曲面 + 平滑着色、皮肤/头发/眼睛/衣物材质、简易骨骼绑定（含 L/R 四肢骨架）。输出 .blend 与渲染预览图，二进制存于仓库。"
+    },
+    {
+      "id": "humanoid-build-001",
+      "name": "人形角色建模流程",
+      "type": "Business Process",
+      "description": "在 Blender 中构建人形角色的流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③无头渲染预览 ④提交登记。"
     }
   ],
   "relationships": [
@@ -105,7 +125,9 @@
       "parent_element_id": "project-overseer-001",
       "description": "项目总管（project-overseer-001）的长期记忆子视图，挂载于 Actor 之下，承载历史工作信息。",
       "included_elements": [
-        "overseer-vision-001"
+        "overseer-vision-001",
+        "humanoid-model-001",
+        "humanoid-build-001"
       ]
     }
   ]
