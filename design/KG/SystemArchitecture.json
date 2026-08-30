@@ -198,7 +198,14 @@
       "id": "va-mem-20260830-humanoid-render",
       "type": "Business Object",
       "name": "会话记忆-2026-08-30-人形渲染视觉分析",
-      "description": "目标：逐张分析 assets/humanoid 5 张渲染图（front/3quarter/tpose/wave/relax）。结论：模型为分离悬浮椭球部件组成的占位人形（奶油皮肤、青绿上衣、蓝裤、棕发帽、灰脚），正面面部空白；driven 验证不通过——手臂网格从骨盆拉伸为青绿飘带状尖刺（tpose 呈 V 形、wave 单刺、relax 仅小凸片），且静态手臂部件不随动，判定蒙皮/权重绑定缺陷。TODO：修复蒙皮后重渲染 5 视图复验。交接：只读角色未执行 git，本次 KG 变更（design/KG/SystemArchitecture.json）留待委派方提交并登记 commit。经验：read 工具可直接消费本仓库 PNG，无需再委派。"
+      "description": "目标：逐张分析 assets/humanoid 5 张渲染图（front/3quarter/tpose/wave/relax）。结论：模型为分离悬浮椭球部件组成的占位人形（奶油皮肤、青绿上衣、蓝裤、棕发帽、灰脚），正面面部空白；driven 验证不通过——手臂网格从骨盆拉伸为青绿飘带状尖刺（tpose 呈 V 形、wave 单刺、relax 仅小凸片），且静态手臂部件不随动，判定蒙皮/权重绑定缺陷。TODO：修复蒙皮后重渲染 5 视图复验。交接：只读角色未执行 git，本次 KG 变更（design/KG/SystemArchitecture.json）留待委派方提交并登记 commit。经验：read 工具可直接消费本仓库 PNG，无需再委派。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "8e32320",
+          "description": "Visual analysis of humanoid renders registered by visual-analyst; files: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
