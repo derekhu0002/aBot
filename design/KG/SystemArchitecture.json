@@ -85,6 +85,10 @@
           "name": "commit",
           "value": "87d6838",
           "description": "KG acceptance testcases registered on humanoid-model-001/humanoid-build-001"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -112,6 +116,10 @@
           "name": "commit",
           "value": "b752b0c",
           "description": "restyle to chibi robot + reproducibility override + acceptance tests"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -261,10 +269,6 @@
           "value": "alibaba-cn/qwen3.8-max"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "d546c89",
           "description": "robot-modeler actor + opencode agent + acceptance test"
@@ -277,6 +281,10 @@
           "name": "commit",
           "value": "988b9d4",
           "description": "Generalized robot-modeler as aBot primary modeling agent; files: .opencode/agent/robot-modeler.md, design/KG/SystemArchitecture.json"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "description": "aBot 机器人 3D 建模员：aBot 今后主要的建模 AGENT，负责 aBot 人形机器人相关的全部 3D 建模工作（模型构建、数字孪生、骨架/绑定/蒙皮、材质、渲染等建模范畴）。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'robot-modeler'（.opencode/agent/robot-modeler.md）。稳定身份 robot-modeler-001。",
@@ -329,6 +337,12 @@
           "description": "chibi restyle deliverables recorded by this memory entry"
         }
       ]
+    },
+    {
+      "id": "va-mem-20260830-chibi-review",
+      "type": "Business Object",
+      "name": "会话记忆-2026-08-30-chibi改造视觉复核",
+      "description": "任务：独立复核 robot-modeler 的 chibi 改造（reference_target.png 对照 preview_front/preview_3quarter）。结论：基本贴合——chibi 大头比例、红+金奶油+黑面罩+绿三角眼配色、耳罩/顶饰带/天线凸块/胸口黄三角徽记/分段臂/红靴+青绿点缀齐全。主要差距：①手为多面块、无机械手指；②面罩为多边形平贴片、无扫描线与金橙包边，眼三维凸出侧视悬浮；③脚下灰色平板底座未去除；④缺铆钉/panel line/金色鞋底等硬表面细节；⑤青绿线缆变尖晶刺。交接：只读角色不执行 git，本次 KG 登记留待委派方提交并登记 commit。"
     }
   ],
   "relationships": [
@@ -427,7 +441,8 @@
       "view_name": "视觉分析员长期记忆",
       "parent_element_id": "visual-analyst-001",
       "included_elements": [
-        "va-mem-20260830-humanoid-render"
+        "va-mem-20260830-humanoid-render",
+        "va-mem-20260830-chibi-review"
       ],
       "included_relationships": []
     },
