@@ -31,7 +31,10 @@ def main():
     twin.start_motion("wave", 4.0)
     time.sleep(4.0)
 
-    # 3. raw FK drive: raise both arms to the sides, then wave the right hand
+    # 3. raw FK drive: raise both arms to the sides, then fold one forearm.
+    # (Side convention, see humanoid_control.py: '.R' bones sit at world +X =
+    # the robot's anatomical LEFT side; '.L' bones at world -X = anatomical
+    # right. The calibrated anatomical-right wave is the "wave" motion above.)
     print("raw FK drive...")
     twin.drive_bones({
         "upper_arm.L": [0.0, 0.0, math.radians(90)],

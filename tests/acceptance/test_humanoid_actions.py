@@ -15,12 +15,18 @@ THEN every action produces its identifiable signature:
   - tpose: both arms horizontal at shoulder height, stretched sideways;
   - apose: both arms angled ~45 deg down-out between relax and tpose;
   - idle: subtle breathing (chest pitch oscillation > 0) with relaxed arms;
-  - wave: right upper arm abducted ~90 deg, forearm folded straight UP
-    (hand above shoulder), left arm stays low, hand rocking;
+  - wave: the anatomical RIGHT upper arm abducted ~90 deg, forearm folded
+    straight UP (hand above shoulder), anatomical left arm stays low, hand
+    rocking. Side convention (probed from build_humanoid.py): the rig builds
+    '.L'-suffixed bones at world -X and '.R'-suffixed bones at world +X while
+    the robot faces world -Y toward the front camera, so the ANATOMICAL RIGHT
+    arm is the '.L' bone chain (world -X, screen LEFT) and the anatomical
+    left arm is the '.R' chain (world +X, screen right);
   - walk: opposite-phase thigh swing >= 0.4 rad, one foot clearly lifted,
     vertical root bob > 0;
-  - nod: head pitch amplitude >= 0.2 rad;
-  - look: head yaw amplitude >= 0.45 rad;
+  - nod: head pitch amplitude >= 0.2 rad (deepened nod, ~0.45 rad peak);
+  - look: horizontal head YAW about the world vertical axis (head-bone local
+    Y component) >= 0.45 rad while the in-plane roll stays small;
   - run: thigh swing >= 0.6 rad and forward lean >= 0.2 rad (both strictly
     stronger than walk) with a high heel kick and stronger bob;
   - and each action_<name>.png exists as a 1280x1280 PNG evidence still.
@@ -65,7 +71,7 @@ CASES = [
 ]
 
 BONES = ["root", "spine", "chest", "head", "upper_arm.L", "upper_arm.R",
-         "forearm.R", "hand.L", "hand.R", "thigh.L", "thigh.R",
+         "forearm.L", "forearm.R", "hand.L", "hand.R", "thigh.L", "thigh.R",
          "foot.L", "foot.R"]
 
 out = {}
@@ -161,14 +167,15 @@ def main():
         failures.append("idle: chest breathing out of range (%.4f)"
                         % rot("idle", "chest", 0))
 
-    # wave: right arm abducted, forearm UP, left arm stays low
-    if abs(rot("wave", "upper_arm.R", 2) + 1.5708) > 0.1:
-        failures.append("wave: upper_arm.R not abducted ~90deg")
-    if tail("wave", "hand.R", 2) < head("wave", "upper_arm.R", 2) + 0.15:
+    # wave: anatomical RIGHT arm = '.L' bone chain (world -X, screen left)
+    # abducted, forearm UP; anatomical left arm ('.R' chain) stays low
+    if abs(rot("wave", "upper_arm.L", 2) - 1.5708) > 0.1:
+        failures.append("wave: upper_arm.L (anatomical right) not abducted ~90deg")
+    if tail("wave", "hand.L", 2) < head("wave", "upper_arm.L", 2) + 0.15:
         failures.append("wave: right hand not raised above shoulder")
-    if tail("wave", "forearm.R", 2) < head("wave", "forearm.R", 2) + 0.08:
+    if tail("wave", "forearm.L", 2) < head("wave", "forearm.L", 2) + 0.08:
         failures.append("wave: right forearm not folded upward")
-    if tail("wave", "hand.L", 2) > 0.35:
+    if tail("wave", "hand.R", 2) > 0.35:
         failures.append("wave: left arm should stay relaxed/low")
 
     # walk: opposite-phase thigh swing, one foot lifted, root bob
@@ -180,11 +187,15 @@ def main():
     if facts["walk"]["root"]["loc"][2] <= 0.01:
         failures.append("walk: no vertical bob")
 
-    # nod / look: head amplitude
+    # nod / look: head amplitude. nod = pitch (local X); look = horizontal
+    # yaw about the world vertical (head local Y), with roll staying small.
     if abs(rot("nod", "head", 0)) < 0.2:
         failures.append("nod: head pitch %.3f < 0.2" % rot("nod", "head", 0))
-    if abs(rot("look", "head", 2)) < 0.45:
-        failures.append("look: head yaw %.3f < 0.45" % rot("look", "head", 2))
+    if abs(rot("look", "head", 1)) < 0.45:
+        failures.append("look: head yaw %.3f < 0.45" % rot("look", "head", 1))
+    if abs(rot("look", "head", 2)) > 0.15:
+        failures.append("look: head roll %.3f should stay small (yaw-dominant)"
+                        % rot("look", "head", 2))
 
     # run: strictly stronger gait than walk + heel kick + stronger bob
     if max(abs(rot("run", "thigh.L", 0)), abs(rot("run", "thigh.R", 0))) < 0.6:

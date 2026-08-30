@@ -3,11 +3,22 @@
 The aBot humanoid (assets/humanoid/humanoid.blend) has an FK armature
 ("HumanoidRig") whose bones were probed:
 
-  - Vertical bones (spine/chest/neck/head/upper_arm/forearm/hand/thigh/shin):
-      local +Y = bone axis, local +X = world +X (right), local +Z = world +Y
-      (forward) for limbs; for spine/head local +Z = world -Y (backward).
-  - rotation_euler is in the bone's local frame where +Y always points along
-      head->tail, so poses are expressed as local Euler rotations.
+   - Vertical bones (spine/chest/neck/head/upper_arm/forearm/hand/thigh/shin):
+       local +Y = bone axis, local +X = world +X (right), local +Z = world +Y
+       (forward) for limbs; for spine/head local +Z = world -Y (backward).
+   - rotation_euler is in the bone's local frame where +Y always points along
+       head->tail, so poses are expressed as local Euler rotations.
+   - SIDE CONVENTION (probed from build_humanoid.py, 2026-08-30): the rig is
+       built with '.L'-suffixed bones at world -X and '.R'-suffixed bones at
+       world +X, while the robot faces world -Y (visor toward the front
+       camera). Anatomically the robot's RIGHT side is world -X and its LEFT
+       side is world +X, so: anatomical RIGHT arm/leg = the '.L' bones
+       (screen LEFT in the front camera), anatomical LEFT = the '.R' bones
+       (screen right). apply_wave raises the anatomical RIGHT arm, i.e. it
+       drives the '.L' bone chain; apply_wave_left mirrors with '.R'.
+   - HEAD AXES: head local X = world X (pitch/nod), local Y = bone axis =
+       world Z (horizontal yaw), local Z = world -Y (in-plane roll). A
+       side-looking "look" is a yaw about local Y, not a roll about local Z.
 
 This module provides:
   - load_humanoid(): load the .blend and return the armature.
@@ -105,10 +116,14 @@ def apply_idle(arm, t):
 
 
 def apply_nod(arm, t):
-    """Nod head up/down."""
+    """Nod head up/down.
+
+    Pitch about head local X (= world X). Amplitude deepened from 0.22 to
+    0.45 rad (2026-08-30) so the bow-down reads clearly in a single still.
+    """
     reset_pose(arm)
     set_bone(arm, "chest", (0.02 * math.sin(t * 1.5), 0, 0))
-    set_bone(arm, "head", (0.22 * math.sin(t * 2.5), 0, 0))
+    set_bone(arm, "head", (0.45 * math.sin(t * 2.5), 0, 0))
     set_bone(arm, "upper_arm.L", (0.04, 0, R(6)))
     set_bone(arm, "upper_arm.R", (0.04, 0, R(-6)))
     set_bone(arm, "forearm.L", (R(10), 0, 0))
@@ -116,9 +131,16 @@ def apply_nod(arm, t):
 
 
 def apply_look(arm, t):
-    """Turn head left/right."""
+    """Turn head left/right: horizontal YAW about the world vertical axis.
+
+    Bug fixed 2026-08-30: the previous implementation rotated the head about
+    its local Z (= world -Y, backward), which is an in-plane ROLL (the visor
+    kept facing the camera and the head only tilted sideways). A side look is
+    a yaw about the head's local Y (= bone axis = world +Z). Positive yaw
+    swings the visor toward world +X, hiding the far (-X) ear pod.
+    """
     reset_pose(arm)
-    set_bone(arm, "head", (0, 0, 0.5 * math.sin(t * 1.5)))
+    set_bone(arm, "head", (0, 0.55 * math.sin(t * 1.5), 0))
     set_bone(arm, "upper_arm.L", (0.04, 0, R(6)))
     set_bone(arm, "upper_arm.R", (0.04, 0, R(-6)))
     set_bone(arm, "forearm.L", (R(10), 0, 0))
@@ -126,33 +148,42 @@ def apply_look(arm, t):
 
 
 def apply_wave(arm, t):
-    """Right arm raised, forearm up, waving hand.
+    """Anatomical RIGHT arm raised, forearm up, waving hand.
 
-    Calibrated 2026-08-30 (probe of the FK axes with the arm abducted):
-    with upper_arm.R at local Z -90 the forearm points straight up at local
-    Z -90 (the old Z 180 folded it back into the torso), and the hand rocks
+    Side fix 2026-08-30 (visual-analyst review): the acceptance criterion is
+    "right arm raised", i.e. the anatomical right arm. In this rig the
+    anatomical right side is world -X = the '.L' bone chain (screen LEFT in
+    the front camera); the previous implementation drove '.R' (world +X),
+    which is anatomically the LEFT arm. See SIDE CONVENTION in the module
+    docstring. Form: upper arm abducted ~90 deg, elbow bent 90 deg with the
+    forearm vertical, hand beside the head with fingers spread, the other
+    arm relaxed at the side.
+
+    Calibrated 2026-08-30 (probe of the FK axes with the arm abducted): with
+    the upper arm abducted to horizontal the forearm points straight up at
+    local Z +90 on the '.L' chain (mirror of -90 on '.R'), and the hand rocks
     side-to-side around its local Z (world forward axis) = the wave.
     """
     reset_pose(arm)
-    # right upper arm out to the side, slight forward swing for the wave
-    set_bone(arm, "upper_arm.R", (-0.15 * math.sin(t * 5.0), 0, R(-90)))
-    # forearm folded straight up
-    set_bone(arm, "forearm.R", (0, 0, R(-90)))
-    # hand rocking side-to-side
-    set_bone(arm, "hand.R", (0, 0, 0.45 * math.sin(t * 6.0)))
-    # left arm relaxed
-    set_bone(arm, "upper_arm.L", (R(8), 0, R(6)))
-    set_bone(arm, "forearm.L", (R(12), 0, 0))
+    # anatomical right ('.L' bones) upper arm out to the side + slight swing
+    set_bone(arm, "upper_arm.L", (-0.15 * math.sin(t * 5.0), 0, R(90)))
+    # forearm folded straight up (elbow ~90 deg)
+    set_bone(arm, "forearm.L", (0, 0, R(90)))
+    # hand rocking side-to-side (fingers spread by the hand mesh)
+    set_bone(arm, "hand.L", (0, 0, 0.45 * math.sin(t * 6.0)))
+    # anatomical left ('.R' bones) arm relaxed, hanging down
+    set_bone(arm, "upper_arm.R", (R(8), 0, R(-6)))
+    set_bone(arm, "forearm.R", (R(12), 0, 0))
 
 
 def apply_wave_left(arm, t):
-    """Mirror wave with the left arm (mirrored calibrated angles)."""
+    """Mirror wave with the anatomical LEFT arm ('.R' bones, world +X)."""
     reset_pose(arm)
-    set_bone(arm, "upper_arm.L", (-0.15 * math.sin(t * 5.0), 0, R(90)))
-    set_bone(arm, "forearm.L", (0, 0, R(90)))
-    set_bone(arm, "hand.L", (0, 0, 0.45 * math.sin(t * 6.0)))
-    set_bone(arm, "upper_arm.R", (R(8), 0, R(-6)))
-    set_bone(arm, "forearm.R", (R(12), 0, 0))
+    set_bone(arm, "upper_arm.R", (-0.15 * math.sin(t * 5.0), 0, R(-90)))
+    set_bone(arm, "forearm.R", (0, 0, R(-90)))
+    set_bone(arm, "hand.R", (0, 0, 0.45 * math.sin(t * 6.0)))
+    set_bone(arm, "upper_arm.L", (R(8), 0, R(6)))
+    set_bone(arm, "forearm.L", (R(12), 0, 0))
 
 
 def apply_walk(arm, t):
