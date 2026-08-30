@@ -342,7 +342,14 @@
       "id": "va-mem-20260830-chibi-review",
       "type": "Business Object",
       "name": "会话记忆-2026-08-30-chibi改造视觉复核",
-      "description": "任务：独立复核 robot-modeler 的 chibi 改造（reference_target.png 对照 preview_front/preview_3quarter）。结论：基本贴合——chibi 大头比例、红+金奶油+黑面罩+绿三角眼配色、耳罩/顶饰带/天线凸块/胸口黄三角徽记/分段臂/红靴+青绿点缀齐全。主要差距：①手为多面块、无机械手指；②面罩为多边形平贴片、无扫描线与金橙包边，眼三维凸出侧视悬浮；③脚下灰色平板底座未去除；④缺铆钉/panel line/金色鞋底等硬表面细节；⑤青绿线缆变尖晶刺。交接：只读角色不执行 git，本次 KG 登记留待委派方提交并登记 commit。"
+      "description": "任务：独立复核 robot-modeler 的 chibi 改造（reference_target.png 对照 preview_front/preview_3quarter）。结论：基本贴合——chibi 大头比例、红+金奶油+黑面罩+绿三角眼配色、耳罩/顶饰带/天线凸块/胸口黄三角徽记/分段臂/红靴+青绿点缀齐全。主要差距：①手为多面块、无机械手指；②面罩为多边形平贴片、无扫描线与金橙包边，眼三维凸出侧视悬浮；③脚下灰色平板底座未去除；④缺铆钉/panel line/金色鞋底等硬表面细节；⑤青绿线缆变尖晶刺。交接：只读角色不执行 git，本次 KG 登记留待委派方提交并登记 commit。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "f1d19c1",
+          "description": "Chibi restyle review record registered by visual-analyst; files: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
