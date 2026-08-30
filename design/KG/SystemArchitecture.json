@@ -220,6 +220,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "d546c89",
+          "description": "robot-modeler actor + opencode agent + acceptance test"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/robot-modeler.md; tests/acceptance/test_robot_modeler.py"
         }
       ],
       "description": "aBot 机器人 3D 建模员：负责 Blender/bpy 程序化建模与数字孪生维护——人形模型构建、骨架绑定与蒙皮修复、材质/渲染、动作验证图输出。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'robot-modeler'（.opencode/agent/robot-modeler.md），供其他 Actor 按 CoperationGuideline 委派建模/孪生实现子任务。稳定身份 robot-modeler-001。",
