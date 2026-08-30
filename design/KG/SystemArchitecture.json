@@ -260,6 +260,11 @@
           "name": "commit",
           "value": "2802d75",
           "description": "Session record registered into overseer LTM; files: .opencode/agent/robot-modeler.md, tests/acceptance/test_robot_modeler.py, design/KG/SystemArchitecture.json"
+        },
+        {
+          "name": "commit",
+          "value": "988b9d4",
+          "description": "关键决策：robot-modeler 定位为 aBot 主要建模 AGENT，职责泛化（负责全部 3D 建模工作），不绑定当前 Blender 具体实现，随项目演进承担建模侧新需求；agent 定义与 Actor 描述同步泛化"
         }
       ]
     }
