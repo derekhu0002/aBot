@@ -128,7 +128,43 @@
       "id": "session-summary-2026-08-30",
       "name": "会话总结 2026-08-30 (P0+P1)",
       "type": "Business Object",
-      "description": "会话总结（2026-08-30）：目标=建立 aBot 人形机器人数字孪生并被本机 Agent 实时操控。进展：P0 程序化建模 humanoid.blend（7e3f92b）；P1 本地操控服务 twin_server + TwinClient（c5615ee），pose/motion/FK/state 全链路验证通过。关键决策：不产视频，改做实时操控接口；aBot≠ArchGraph 北极星。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。经验：无头 timers 不触发须手动 drive_once；Blender 5.1 FFMPEG 被拒用系统 ffmpeg。"
+      "description": "会话总结（2026-08-30）：目标=建立 aBot 人形机器人数字孪生并被本机 Agent 实时操控。进展：P0 程序化建模 humanoid.blend（7e3f92b）；P1 本地操控服务 twin_server + TwinClient（c5615ee），pose/motion/FK/state 全链路验证通过。关键决策：不产视频，改做实时操控接口；aBot≠ArchGraph 北极星。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。经验：无头 timers 不触发须手动 drive_once；Blender 5.1 FFMPEG 被拒用系统 ffmpeg。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "bcacff1",
+          "description": "Session summary registered into overseer LTM; file: design/KG/SystemArchitecture.json"
+        }
+      ]
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "visual-analyst"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-max"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 视觉分析员：负责图像/视频/多模态内容的识别、理解、分析与报告。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'visual-analyst'（.opencode/agent/visual-analyst.md），供其他 Actor 按 CapabilityDelegationGuideline 委派视觉分析子任务。稳定身份 visual-analyst-001。",
+      "id": "visual-analyst-001",
+      "name": "视觉分析员",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 visual-analyst-001 元素 + 仓库 .opencode/agent/visual-analyst.md 文件",
+          "acceptanceCriteria": "tests/acceptance/test_visual_analyst.py",
+          "description": "GIVEN aBot 意图图含视觉分析员 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=visual-analyst、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/visual-analyst.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "visual-analyst-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
     }
   ],
   "relationships": [
@@ -194,7 +230,8 @@
       "included_elements": [
         "1249",
         "1240",
-        "project-overseer-001"
+        "project-overseer-001",
+        "visual-analyst-001"
       ],
       "included_relationships": [
         "1161"
