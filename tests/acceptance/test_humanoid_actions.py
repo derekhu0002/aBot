@@ -10,6 +10,10 @@ and the resulting rig state is observed externally (pose-bone local Euler
 rotations + world-space bone head/tail, the same observables the /state
 endpoint of twin_server exposes), plus the committed evidence stills
 assets/humanoid/action_<name>.png
+AND separately the blend is re-opened WITHOUT any Python driver (fresh load,
+no handlers, no control-module calls) and the baked keyframe Actions
+(ActionRelax..ActionRun) are evaluated frame by frame — exactly what happens
+when a user loads humanoid.blend in the Blender GUI and presses play
 THEN every action produces its identifiable signature:
   - relax: arms hang at the sides, slightly bent (hands low, |x| small);
   - tpose: both arms horizontal at shoulder height, stretched sideways;
@@ -29,7 +33,23 @@ THEN every action produces its identifiable signature:
     Y component) >= 0.45 rad while the in-plane roll stays small;
   - run: thigh swing >= 0.6 rad and forward lean >= 0.2 rad (both strictly
     stronger than walk) with a high heel kick and stronger bob;
-  - and each action_<name>.png exists as a 1280x1280 PNG evidence still.
+  - and each action_<name>.png exists as a 1280x1280 PNG evidence still;
+  - and the blend ships all nine baked Actions ActionRelax/ActionTPose/
+    ActionAPose/ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/
+    ActionRun whose F-curves are JOINT-ONLY (pose-bone rotation_euler, plus
+    the FK root-bob location for walk/run — no mesh/shape-key/vertex
+    animation), with an Action already attached to the armature on load so
+    GUI play shows motion immediately;
+  - and playing each baked Action over time reproduces the same contract
+    externally: idle chest breathing range >= 0.04 rad; wave anatomical right
+    ('.L') upper arm held abducted ~90 deg while hand.L rocks (range >= 0.6
+    rad) and the left arm stays static; walk thighs swing opposite phase with
+    per-bone range >= 0.8 rad and the root bobs (loc z range >= 0.02); nod
+    head pitch range >= 0.8 rad peaking >= 0.4; look head yaw (local Y) range
+    >= 1.0 rad peaking >= 0.5 with roll <= 0.15; run thigh range >= 1.2 rad
+    with pronounced forward lean (mean >= 0.2 rad) and stronger bob;
+    relax/tpose/apose hold their joint angles over time (rotation range ~0)
+    with upper_arm.L local Z at ~0.1047/1.5708/0.7854 rad respectively.
 """
 
 import json
@@ -87,6 +107,93 @@ for name, fn, t in CASES:
                 "tail": [round(v, 4) for v in (arm.matrix_world @ pb.tail)]}
     out[name] = f
 print("ACTION_FACTS_JSON " + json.dumps(out))
+
+# ---------------------------------------------------------------------------
+# Part B: baked Actions play back joint motion WITHOUT any Python driver.
+# Fresh load (no frame handlers, no control-module calls): this is exactly
+# "load humanoid.blend in the GUI and press play".
+# ---------------------------------------------------------------------------
+bpy.ops.wm.open_mainfile(filepath=blend_path)
+arm = bpy.data.objects["HumanoidRig"]
+ad = arm.animation_data
+scene = bpy.context.scene
+STATIC = ("ActionRelax", "ActionTPose", "ActionAPose")
+SAMPLE_BONES = ["chest", "head", "spine", "upper_arm.L", "upper_arm.R",
+                "forearm.L", "forearm.R", "hand.L", "hand.R",
+                "thigh.L", "thigh.R"]
+EXPECTED_ACTIONS = ["ActionRelax", "ActionTPose", "ActionAPose", "ActionIdle",
+                    "ActionWave", "ActionWalk", "ActionNod", "ActionLook",
+                    "ActionRun"]
+
+def action_fcurves(act):
+    # Blender 4.4+ slotted Actions expose F-curves via layers/strips/
+    # channelbags; legacy actions expose them flat.
+    if hasattr(act, "fcurves"):
+        try:
+            return list(act.fcurves)
+        except (AttributeError, RuntimeError):
+            pass
+    curves = []
+    for layer in getattr(act, "layers", ()):
+        for strip in layer.strips:
+            for slot in getattr(act, "slots", ()):
+                bag = strip.channelbag(slot)
+                if bag is not None:
+                    curves.extend(bag.fcurves)
+    return curves
+
+out_b = {"default_action": (ad.action.name if ad and ad.action else None),
+         "actions": {}}
+for aname in EXPECTED_ACTIONS:
+    act = bpy.data.actions.get(aname)
+    info = {"exists": act is not None}
+    out_b["actions"][aname] = info
+    if act is None:
+        continue
+    curves = action_fcurves(act)
+    info["joint_only"] = bool(curves) and all(
+        fc.data_path.startswith("pose.bones[")
+        and (fc.data_path.endswith("rotation_euler")
+             or fc.data_path.endswith("location"))
+        for fc in curves)
+    fr0, fr1 = int(act.frame_range[0]), int(act.frame_range[1])
+    info["range"] = [fr0, fr1]
+    ad.action = act
+    n = 12
+    frames = sorted({fr0 + round(i * (fr1 - fr0) / (n - 1)) for i in range(n)})
+    samples = {}
+    for f in frames:
+        scene.frame_set(f)
+        bpy.context.view_layer.update()
+        if f == frames[0]:
+            info["first_frame"] = {
+                b: [round(v, 4) for v in arm.pose.bones[b].rotation_euler]
+                for b in SAMPLE_BONES}
+        if aname not in STATIC:
+            for b in SAMPLE_BONES:
+                samples.setdefault(b, []).append(
+                    [round(v, 4) for v in arm.pose.bones[b].rotation_euler])
+    info["rot_range"] = {
+        b: round(max(max(s[i] for s in samples[b])
+                     - min(s[i] for s in samples[b])
+                     for i in range(3)), 4)
+        for b in samples}
+    if aname not in STATIC:
+        info["samples"] = samples  # static poses keep first_frame + rot_range only
+# root-bob location sampling for the two locomotion clips
+for aname in ("ActionWalk", "ActionRun"):
+    act = bpy.data.actions.get(aname)
+    if act is None:
+        continue
+    ad.action = act
+    fr0, fr1 = int(act.frame_range[0]), int(act.frame_range[1])
+    zs = []
+    for i in range(12):
+        scene.frame_set(fr0 + round(i * (fr1 - fr0) / 11))
+        bpy.context.view_layer.update()
+        zs.append(round(arm.pose.bones["root"].location[2], 4))
+    out_b["actions"][aname]["root_loc_samples"] = zs
+print("BAKED_FACTS_JSON " + json.dumps(out_b))
 """
 
 
@@ -130,7 +237,8 @@ def main():
     if line is None:
         print("FAIL: no ACTION_FACTS_JSON in blender output")
         return 1
-    facts = json.loads(line[len("ACTION_FACTS_JSON "):])
+    # raw_decode tolerates Blender status text glued after the JSON object
+    facts, _ = json.JSONDecoder().raw_decode(line[len("ACTION_FACTS_JSON "):])
 
     def rot(name, bone, i):
         return facts[name][bone]["rot"][i]
@@ -207,6 +315,123 @@ def main():
     if facts["run"]["root"]["loc"][2] <= facts["walk"]["root"]["loc"][2]:
         failures.append("run: bob not stronger than walk")
 
+    # ------------------------------------------------------------------
+    # Part B: baked Actions must play back joint motion without a driver
+    # ------------------------------------------------------------------
+    line_b = next((l for l in proc.stdout.splitlines()
+                   if l.startswith("BAKED_FACTS_JSON ")), None)
+    if line_b is None:
+        print("FAIL: no BAKED_FACTS_JSON in blender output")
+        return 1
+    baked, _ = json.JSONDecoder().raw_decode(line_b[len("BAKED_FACTS_JSON "):])
+    ba = baked.get("actions", {})
+
+    def brange(aname, bone):
+        return ba.get(aname, {}).get("rot_range", {}).get(bone, 0.0)
+
+    def bsamples(aname, bone):
+        return ba.get(aname, {}).get("samples", {}).get(bone, [])
+
+    # load-and-play: an Action is already attached when the blend is opened
+    if not baked.get("default_action", "").startswith("Action"):
+        failures.append("baked: no Action attached on load (GUI play would show "
+                        "nothing until the user picks one): %r"
+                        % baked.get("default_action"))
+
+    for aname in ("ActionRelax", "ActionTPose", "ActionAPose", "ActionIdle",
+                  "ActionWave", "ActionWalk", "ActionNod", "ActionLook",
+                  "ActionRun"):
+        info = ba.get(aname, {})
+        if not info.get("exists"):
+            failures.append("baked: missing Action %s" % aname)
+            continue
+        if not info.get("joint_only"):
+            failures.append("baked: %s is not joint-only (F-curves must be "
+                            "pose-bone rotation_euler / FK root location)" % aname)
+
+    # idle: breathing oscillates over time (joint rotation changes)
+    if brange("ActionIdle", "chest") < 0.04:
+        failures.append("baked idle: chest rotation range %.4f < 0.04"
+                        % brange("ActionIdle", "chest"))
+    if brange("ActionIdle", "upper_arm.L") < 0.05:
+        failures.append("baked idle: arm sway missing")
+
+    # wave: anatomical right ('.L') arm abducted ~90 deg, hand rocking,
+    # anatomical left arm static
+    wave_uz = [s[2] for s in bsamples("ActionWave", "upper_arm.L")]
+    if not wave_uz or max(abs(z - 1.5708) for z in wave_uz) > 0.15:
+        failures.append("baked wave: upper_arm.L not held abducted ~90deg")
+    if brange("ActionWave", "hand.L") < 0.6:
+        failures.append("baked wave: hand.L rocking range %.3f < 0.6"
+                        % brange("ActionWave", "hand.L"))
+    if brange("ActionWave", "upper_arm.R") > 0.05:
+        failures.append("baked wave: left arm should stay static")
+
+    # walk: opposite-phase thigh swing over time + root bob
+    tl = [s[0] for s in bsamples("ActionWalk", "thigh.L")]
+    tr = [s[0] for s in bsamples("ActionWalk", "thigh.R")]
+    if brange("ActionWalk", "thigh.L") < 0.8 or brange("ActionWalk", "thigh.R") < 0.8:
+        failures.append("baked walk: thigh rotation range < 0.8 rad")
+    if not tl or not any(a * b < 0 and min(abs(a), abs(b)) > 0.3
+                         for a, b in zip(tl, tr)):
+        failures.append("baked walk: thighs not opposite-phase over time")
+    wzs = ba.get("ActionWalk", {}).get("root_loc_samples", [])
+    if not wzs or max(wzs) - min(wzs) < 0.02 or max(wzs) < 0.03:
+        failures.append("baked walk: root bob missing (loc z samples %s)" % wzs)
+
+    # nod: head pitch swings
+    if brange("ActionNod", "head") < 0.8:
+        failures.append("baked nod: head rotation range %.3f < 0.8"
+                        % brange("ActionNod", "head"))
+    nod_hx = [s[0] for s in bsamples("ActionNod", "head")]
+    if not nod_hx or max(abs(v) for v in nod_hx) < 0.4:
+        failures.append("baked nod: head pitch peak < 0.4 rad")
+
+    # look: yaw (local Y) swings, roll stays small
+    if brange("ActionLook", "head") < 1.0:
+        failures.append("baked look: head rotation range %.3f < 1.0"
+                        % brange("ActionLook", "head"))
+    look_hy = [s[1] for s in bsamples("ActionLook", "head")]
+    look_hz = [s[2] for s in bsamples("ActionLook", "head")]
+    if not look_hy or max(abs(v) for v in look_hy) < 0.5:
+        failures.append("baked look: head yaw peak < 0.5 rad")
+    if look_hz and max(abs(v) for v in look_hz) > 0.15:
+        failures.append("baked look: head roll should stay small")
+
+    # run: stronger gait, pronounced forward lean (R(12)+0.06*sin oscillates
+    # about a 0.209 rad mean, same as the runtime contract), stronger bob
+    if brange("ActionRun", "thigh.L") < 1.2:
+        failures.append("baked run: thigh rotation range %.3f < 1.2"
+                        % brange("ActionRun", "thigh.L"))
+    run_sx = [s[0] for s in bsamples("ActionRun", "spine")]
+    if not run_sx or sum(run_sx) / len(run_sx) < 0.2 or max(run_sx) < 0.26:
+        failures.append("baked run: forward lean mean/peak too small "
+                        "(mean=%.3f peak=%.3f)" % (
+                            sum(run_sx) / max(len(run_sx), 1),
+                            max(run_sx) if run_sx else 0.0))
+    rzs = ba.get("ActionRun", {}).get("root_loc_samples", [])
+    if not rzs or max(rzs) - min(rzs) < 0.03:
+        failures.append("baked run: root bob missing/weak (loc z samples %s)" % rzs)
+
+    # static poses: hold their joint angles and do not move over time
+    def ff(aname, bone):
+        return ba.get(aname, {}).get("first_frame", {}).get(bone)
+
+    if not ff("ActionRelax", "upper_arm.L") or \
+            abs(ff("ActionRelax", "upper_arm.L")[2] - 0.1047) > 0.03 or \
+            abs(ff("ActionRelax", "upper_arm.R")[2] + 0.1047) > 0.03:
+        failures.append("baked relax: upper-arm joint angles wrong")
+    if not ff("ActionTPose", "upper_arm.L") or \
+            abs(ff("ActionTPose", "upper_arm.L")[2] - 1.5708) > 0.03:
+        failures.append("baked tpose: upper_arm.L local Z != ~1.5708")
+    if not ff("ActionAPose", "upper_arm.L") or \
+            abs(ff("ActionAPose", "upper_arm.L")[2] - 0.7854) > 0.03:
+        failures.append("baked apose: upper_arm.L local Z != ~0.7854")
+    for aname in ("ActionRelax", "ActionTPose", "ActionAPose"):
+        rr = ba.get(aname, {}).get("rot_range")
+        if rr and max(rr.values()) > 0.001:
+            failures.append("baked %s: static pose must not move over time" % aname)
+
     # evidence stills
     for path in EVIDENCE:
         if not os.path.exists(path):
@@ -220,7 +445,8 @@ def main():
         print("FAIL:\n  - " + "\n  - ".join(failures))
         return 1
     print("PASS: all 9 key actions drive the chibi twin with identifiable "
-          "signatures; 9 evidence stills present at 1280x1280")
+          "signatures; 9 joint-only baked Actions play back on load (GUI play "
+          "shows motion); 9 evidence stills present at 1280x1280")
     return 0
 
 
