@@ -106,6 +106,12 @@
           "description": "Twin control service + client + demo; files: scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py"
         }
       ]
+    },
+    {
+      "id": "handoff-001",
+      "name": "aBot 项目交接总结",
+      "type": "Business Object",
+      "description": "aBot 项目交接总结（2026-08-30）：项目北极星=开发人形机器人，用 Blender 数字孪生探索软件与智能；已完成 P0 数字孪生模型 + P1 本机 Agent 实时操控（HTTP 控制服务 + TwinClient，pose/motion/FK/state）；意图图 7 元素/3 关系/5 视图；路线：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。全文存于仓库 HANDOFF.md。"
     }
   ],
   "relationships": [
@@ -186,7 +192,8 @@
         "humanoid-model-001",
         "humanoid-build-001",
         "abot-vision-001",
-        "twin-control-001"
+        "twin-control-001",
+        "handoff-001"
       ],
       "included_relationships": [
         "humanoid-model-serves-abot-vision",
