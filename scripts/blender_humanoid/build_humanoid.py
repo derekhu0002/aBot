@@ -40,8 +40,20 @@ Design decisions
    scanline (wave->ramp->bump+color) in the visor material, and emissive
    triangle eyes rebuilt as curved shell outlines hugging the visor (no
    floating in side view).
- - Hard-surface detail: helmet rivets, two horizontal panel-line seams, a
-   cream waist belt (mechanical trim density closer to the reference).
+  - Hard-surface detail: helmet rivets, two horizontal panel-line seams, a
+    cream waist belt (mechanical trim density closer to the reference).
+
+Baked keyframe Actions (2026-08-30): after skinning, every key action is
+baked into the .blend as a named Action (ActionRelax/ActionTPose/ActionAPose/
+ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun) of pure
+pose-bone rotation keyframes (walk/run additionally key the FK root-bob
+location) — no vertex/shape animation. The motion parameters come straight
+from humanoid_control.ACTION_SPECS / MOTION_DRIVERS so the baked clips and
+the runtime FK chain share one contract. ActionIdle stays attached to the
+armature, so opening the blend in the Blender GUI and pressing play shows
+joint motion immediately; all nine Actions are selectable in the Action
+Editor. The preview renders detach the Action first so they show the neutral
+rest pose.
 
 Run headless:
     blender -b -P scripts/blender_humanoid/build_humanoid.py
@@ -49,9 +61,16 @@ Run headless:
 
 import math
 import os
+import sys
 
 import bpy
 from mathutils import Vector
+
+# humanoid_control lives next to this script (shared bake contract)
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+import humanoid_control as hc  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Output paths (ABOT_HUMANOID_OUT_DIR overrides for reproducible test builds)
@@ -664,10 +683,106 @@ def fix_weights(arm_obj, body):
 
 
 # ---------------------------------------------------------------------------
+# Baked keyframe Actions (GUI-playable, joint-rotation-only)
+# ---------------------------------------------------------------------------
+def _action_fcurves(act):
+    """All F-curves of an Action, compatible with Blender 4.4+ slotted
+    Actions (layers/strips/channelbags) and legacy flat actions."""
+    if hasattr(act, "fcurves"):
+        try:
+            return list(act.fcurves)
+        except (AttributeError, RuntimeError):
+            pass
+    curves = []
+    for layer in getattr(act, "layers", ()):
+        for strip in layer.strips:
+            for slot in getattr(act, "slots", ()):
+                bag = strip.channelbag(slot)
+                if bag is not None:
+                    curves.extend(bag.fcurves)
+    return curves
+
+
+def _driven_channels(arm, fn, dur):
+    """Names of pose bones whose rotation/location the motion ever drives.
+
+    The driver is sampled across its whole duration; only bones that actually
+    move get keyframes, so static actions stay tiny and un-driven bones keep
+    following the rest pose.
+    """
+    rot_bones, loc_bones = set(), set()
+    samples = [0.0] if dur is None else [dur * i / 8.0 for i in range(9)]
+    for t in samples:
+        fn(arm, t)  # every driver resets the pose itself
+        for pb in arm.pose.bones:
+            if any(abs(v) > 1e-6 for v in pb.rotation_euler):
+                rot_bones.add(pb.name)
+            if any(abs(v) > 1e-6 for v in pb.location):
+                loc_bones.add(pb.name)
+    hc.reset_pose(arm)
+    return sorted(rot_bones), sorted(loc_bones)
+
+
+def bake_actions(arm):
+    """Bake every key action into a named Action of bone-rotation keyframes.
+
+    Pure joint animation: every F-curve targets a pose-bone rotation_euler
+    (walk/run additionally key the FK root-bob location); no vertex/shape-key
+    animation is introduced anywhere. Keyframes are sampled straight from
+    humanoid_control's drivers at FPS resolution over one (or more) full
+    motion cycles, so looped playback is seamless. The armature is left with
+    ActionIdle attached so pressing play in the GUI moves the robot right
+    away; all nine Actions stay selectable in the Action Editor.
+    """
+    scene = bpy.context.scene
+    scene.render.fps = hc.FPS
+    ad = arm.animation_data_create()
+    baked = {}
+    for name, action_name, dur in hc.ACTION_SPECS:
+        fn = hc.MOTION_DRIVERS[name]
+        rot_bones, loc_bones = _driven_channels(arm, fn, dur)
+        act = bpy.data.actions.new(action_name)
+        act.use_fake_user = True  # keep the clip alive in the .blend
+        ad.action = act           # keyframe_insert writes into this action
+        n_frames = 60 if dur is None else int(round(dur * hc.FPS)) + 1
+        key_frames = (1, n_frames) if dur is None else range(1, n_frames + 1)
+        for f in key_frames:
+            t = 0.0 if dur is None else (f - 1) / hc.FPS
+            fn(arm, t)
+            for bn in rot_bones:
+                arm.pose.bones[bn].keyframe_insert("rotation_euler", frame=f)
+            for bn in loc_bones:
+                arm.pose.bones[bn].keyframe_insert("location", frame=f)
+        # joint-only contract, enforced at bake time
+        curves = _action_fcurves(act)
+        if not curves:
+            raise RuntimeError("baked %s has no F-curves" % action_name)
+        for fc in curves:
+            if not (fc.data_path.startswith("pose.bones[")
+                    and (fc.data_path.endswith("rotation_euler")
+                         or fc.data_path.endswith("location"))):
+                raise RuntimeError("non-joint F-curve baked: %s" % fc.data_path)
+        baked[name] = (act, n_frames)
+        print("BAKED %s -> %s: %d frames, rot=%s loc=%s"
+              % (name, action_name, n_frames, rot_bones, loc_bones))
+    default_act, default_end = baked["idle"]
+    ad.action = default_act
+    scene.frame_start = 1
+    scene.frame_end = default_end
+    return baked
+
+
+# ---------------------------------------------------------------------------
 # Camera / lights / render
 # ---------------------------------------------------------------------------
-def setup_scene_and_render():
+def setup_scene_and_render(arm):
     scene = bpy.context.scene
+    # Previews show the neutral rest pose: detach the baked Action, otherwise
+    # the depsgraph would evaluate it over the pose at render time.
+    ad = arm.animation_data if arm is not None else None
+    stashed_action = ad.action if ad is not None else None
+    if ad is not None:
+        ad.action = None
     # Engine: EEVEE (Blender 5.x)
     scene.render.engine = "BLENDER_EEVEE"
     scene.render.resolution_x = 1280
@@ -746,9 +861,16 @@ def main():
     print("== building humanoid ==")
     body = build_humanoid()
     print("== adding armature ==")
-    add_armature(body)
+    arm = add_armature(body)
+    print("== baking key actions ==")
+    bake_actions(arm)
     print("== scene + render ==")
-    setup_scene_and_render()
+    setup_scene_and_render(arm)
+    # Re-attach the default baked Action so opening the saved blend in the
+    # GUI and pressing play shows joint motion immediately (setup_scene_and_
+    # render detached it only so the previews show the neutral rest pose).
+    if arm.animation_data is not None:
+        arm.animation_data.action = bpy.data.actions.get("ActionIdle")
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_OUT)
     print(f"SAVED: {BLEND_OUT}")
 

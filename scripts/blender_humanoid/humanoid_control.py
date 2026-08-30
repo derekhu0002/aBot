@@ -31,6 +31,19 @@ This module provides:
 
 The same API is what a future "brain" (LLM/agent) will call to make the bot
 move — P1 delivers the drivable core.
+
+Baked keyframe Actions (2026-08-30): every key action below is ALSO baked
+into humanoid.blend as a named Action (ACTION_SPECS: ActionRelax, ActionTPose,
+ActionAPose, ActionIdle, ActionWave, ActionWalk, ActionNod, ActionLook,
+ActionRun) by build_humanoid.py, as pure pose-bone rotation keyframes (walk/
+run additionally key the FK root-bob location) — no vertex/shape animation.
+The Blender GUI can therefore select an Action and just press play, with no
+Python driver involved. MOTION_DRIVERS maps motion names to the driver
+functions used for baking, so the baked clips and this runtime FK chain share
+one contract. Because an attached Action would overwrite Python-driven joint
+rotations during depsgraph evaluation, load_humanoid() detaches the active
+Action for runtime driving; the baked Actions remain in bpy.data.actions for
+GUI selection.
 """
 
 import math
@@ -45,9 +58,19 @@ FPS = 30
 # Loading / low-level
 # ---------------------------------------------------------------------------
 def load_humanoid(blend_path, arm_name="HumanoidRig"):
-    """Open the blend and return the armature object."""
+    """Open the blend and return the armature object.
+
+    The blend ships with baked keyframe Actions (see module docstring). An
+    attached Action would overwrite Python-driven joint rotations during
+    depsgraph evaluation, so it is detached here: runtime FK driving via this
+    module stays authoritative while the baked Actions remain in
+    bpy.data.actions for GUI playback.
+    """
     bpy.ops.wm.open_mainfile(filepath=blend_path)
-    return bpy.data.objects[arm_name]
+    arm = bpy.data.objects[arm_name]
+    if arm.animation_data is not None and arm.animation_data.action is not None:
+        arm.animation_data.action = None
+    return arm
 
 
 def reset_pose(arm):
@@ -236,6 +259,44 @@ def apply_run(arm, t):
     set_bone(arm, "chest", (0.08 * math.sin(f), 0, 0))
     # stronger vertical bob
     set_bone(arm, "root", (0, 0, 0), loc=(0, 0, 0.05 * abs(s)))
+
+
+# ---------------------------------------------------------------------------
+# Baked-Action contract (shared with the build_humanoid.py bake step)
+# ---------------------------------------------------------------------------
+# Every key action is baked into humanoid.blend as a named Action of
+# pose-bone rotation keyframes (walk/run additionally key the FK root-bob
+# location) so the Blender GUI plays the motion from the timeline without any
+# Python driver. Durations are (near-)multiples of each motion's component
+# periods so looped playback is seamless.
+ACTION_SPECS = (
+    # (motion name, baked Action name, duration in seconds; None = static hold)
+    ("relax", "ActionRelax", None),
+    ("tpose", "ActionTPose", None),
+    ("apose", "ActionAPose", None),
+    ("idle", "ActionIdle", 2 * math.pi / 1.2),     # one breathing period
+    ("wave", "ActionWave", 2 * math.pi),           # common period of 5 & 6 rad/s
+    ("walk", "ActionWalk", math.pi),               # one full gait cycle
+    ("nod", "ActionNod", 2 * (2 * math.pi / 2.5)),  # two head-nod periods
+    ("look", "ActionLook", 2 * math.pi / 1.5),     # one yaw period
+    ("run", "ActionRun", 2 * math.pi / 3.0),       # one stride cycle
+)
+
+# motion name -> driver function with uniform (arm, t) signature (the single
+# source of truth for baking; static poses ignore t)
+MOTION_DRIVERS = {
+    "relax": lambda arm, t: pose_relax(arm),
+    "tpose": lambda arm, t: pose_tpose(arm),
+    "apose": lambda arm, t: pose_apose(arm),
+    "idle": apply_idle,
+    "wave": apply_wave,
+    "walk": apply_walk,
+    "nod": apply_nod,
+    "look": apply_look,
+    "run": apply_run,
+}
+
+STATIC_ACTIONS = frozenset(spec[1] for spec in ACTION_SPECS if spec[2] is None)
 
 
 # ---------------------------------------------------------------------------
