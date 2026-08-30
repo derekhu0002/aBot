@@ -546,6 +546,11 @@
         {
           "name": "lastSummaryAt",
           "value": "2026-08-30"
+        },
+        {
+          "name": "commit",
+          "value": "966a4c4",
+          "description": "T1 summary + re-verify record committed by delegator; files: design/KG/SystemArchitecture.json"
         }
       ]
     }
