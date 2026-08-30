@@ -148,10 +148,6 @@
           "value": "alibaba-cn/qwen3.8-max"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "50cbe8d",
           "description": "visual-analyst actor + opencode agent + acceptance test"
@@ -159,6 +155,10 @@
         {
           "name": "file_paths",
           "value": ".opencode/agent/visual-analyst.md; tests/acceptance/test_visual_analyst.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "description": "aBot 视觉分析员：负责图像/视频/多模态内容的识别、理解、分析与报告。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'visual-analyst'（.opencode/agent/visual-analyst.md），供其他 Actor 按 CapabilityDelegationGuideline 委派视觉分析子任务。稳定身份 visual-analyst-001。",
@@ -206,6 +206,35 @@
           "description": "Visual analysis of humanoid renders registered by visual-analyst; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "robot-modeler"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-max"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 机器人 3D 建模员：负责 Blender/bpy 程序化建模与数字孪生维护——人形模型构建、骨架绑定与蒙皮修复、材质/渲染、动作验证图输出。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'robot-modeler'（.opencode/agent/robot-modeler.md），供其他 Actor 按 CoperationGuideline 委派建模/孪生实现子任务。稳定身份 robot-modeler-001。",
+      "id": "robot-modeler-001",
+      "name": "机器人3D建模员",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 robot-modeler-001 元素 + 仓库 .opencode/agent/robot-modeler.md 文件",
+          "acceptanceCriteria": "tests/acceptance/test_robot_modeler.py",
+          "description": "GIVEN aBot 意图图含机器人3D建模员 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=robot-modeler、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/robot-modeler.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "robot-modeler-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
     }
   ],
   "relationships": [
@@ -272,7 +301,8 @@
         "1249",
         "1240",
         "project-overseer-001",
-        "visual-analyst-001"
+        "visual-analyst-001",
+        "robot-modeler-001"
       ],
       "included_relationships": [
         "1161"
