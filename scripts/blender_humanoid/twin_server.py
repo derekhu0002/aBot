@@ -14,7 +14,7 @@ API (JSON):
     GET  /health  -> {"status": "ok", "model": "...", "bones": n}
     GET  /state   -> {"bones": {name: [x,y,z], ...}, "motion": name|None}
     POST /pose    {"name": "relax"|"tpose"|"apose"}            static pose
-    POST /motion  {"name": "idle"|"wave"|"walk"|"nod"|"look",
+    POST /motion  {"name": "idle"|"wave"|"walk"|"nod"|"look"|"run",
                    "duration": seconds}                         time-based motion
     POST /bones   {"bones": {"upper_arm.R": [0,0,1.57], ...}}   raw FK drive
     POST /stop    {}                                            stop current motion

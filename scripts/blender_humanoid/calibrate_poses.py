@@ -46,6 +46,7 @@ def main():
     render_pose("walk", lambda a, t: hc.apply_walk(a, t), t=0.9)
     render_pose("nod", lambda a, t: hc.apply_nod(a, t), t=0.3)
     render_pose("look", lambda a, t: hc.apply_look(a, t), t=0.7)
+    render_pose("run", lambda a, t: hc.apply_run(a, t), t=0.42)
 
 
 if __name__ == "__main__":

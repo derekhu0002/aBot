@@ -19,8 +19,13 @@ Design decisions
   accents. View transform 'Standard' for the saturated toy look.
  - The same FK armature layout (root -> spine -> chest -> neck -> head, plus
    L/R shoulder/upper_arm/forearm/hand/thigh/shin/foot) is kept so the twin
-   control chain (humanoid_control.py / twin_server.py) keeps working; the
-   joined mesh is parented with automatic weights + distance-falloff fallback.
+   control chain (humanoid_control.py / twin_server.py) keeps working.
+ - Skinning (2026-08-30 action-evidence session): rigid per-part weights —
+   every connected mesh island follows its nearest bone segment. Automatic
+   (bone-heat) weights leaked torso verts onto the hanging arm bones, which
+   stretched the body when the arms were raised (wave/tpose); the robot is a
+   segmented mechanical figure, so rigid islands are both correct and clean.
+   A Gaussian distance-falloff fallback still fills bones without an island.
  - Output paths can be redirected with ABOT_HUMANOID_OUT_DIR (used by the
    reproducibility acceptance test); default is assets/humanoid.
 
@@ -542,15 +547,69 @@ def add_armature(body):
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
-    # Parent mesh to armature with automatic weights
-    bpy.ops.object.select_all(action="DESELECT")
-    body.select_set(True)
-    arm.select_set(True)
-    bpy.context.view_layer.objects.active = arm
-    bpy.ops.object.parent_set(type="ARMATURE_AUTO")
-    # Fallback: ensure every bone has a vertex group with non-zero weights
+    # Rigid per-part skinning: each connected island follows its nearest bone
+    # (no auto-weight leakage), then a Gaussian fallback fills empty groups.
+    assign_rigid_weights(arm, body)
     fix_weights(arm, body)
+    mod = body.modifiers.new("Armature", "ARMATURE")
+    mod.object = arm
+    body.parent = arm
     return arm
+
+
+def assign_rigid_weights(arm_obj, body):
+    """Rigid skinning: bind every connected mesh island to its nearest bone.
+
+    The chibi robot is built from many disjoint primitive shells (helmet,
+    visor, arm segments, boot parts, ...).  Binding each island rigidly to
+    the bone segment closest to its centroid gives clean segmented-robot
+    deformation and cannot leak torso verts onto arm bones the way bone-heat
+    automatic weights did (which stretched the body in raised-arm poses).
+    """
+    import bmesh
+
+    mesh = body.data
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bm.verts.ensure_lookup_table()
+    seen = set()
+    islands = []
+    for v in bm.verts:
+        if v.index in seen:
+            continue
+        comp = []
+        stack = [v]
+        seen.add(v.index)
+        while stack:
+            cur = stack.pop()
+            comp.append(cur.index)
+            for e in cur.link_edges:
+                o = e.other_vert(cur)
+                if o.index not in seen:
+                    seen.add(o.index)
+                    stack.append(o)
+        islands.append(comp)
+    bm.free()
+
+    bones = [(b.name, Vector(b.head_local), Vector(b.tail_local))
+             for b in arm_obj.data.bones]
+
+    def seg_dist(p, p0, p1):
+        seg = p1 - p0
+        l2 = seg.length_squared
+        t = 0.0 if l2 < 1e-9 else max(0.0, min(1.0, (p - p0).dot(seg) / l2))
+        return (p - (p0 + seg * t)).length
+
+    body.vertex_groups.clear()
+    groups = {name: body.vertex_groups.new(name=name) for name, _, _ in bones}
+    for comp in islands:
+        c = Vector((0.0, 0.0, 0.0))
+        for vi in comp:
+            c += mesh.vertices[vi].co
+        c /= len(comp)
+        best = min(bones, key=lambda b: seg_dist(c, b[1], b[2]))
+        groups[best[0]].add(comp, 1.0, "REPLACE")
+    return len(islands)
 
 
 def fix_weights(arm_obj, body):
@@ -579,7 +638,7 @@ def fix_weights(arm_obj, body):
                         existing_ok = True
                         break
                 except RuntimeError:
-                    break
+                    continue  # vertex not in this group; keep scanning
         if existing_ok:
             continue
 

@@ -49,7 +49,7 @@ class TwinClient:
         return self._post("/pose", {"name": name})
 
     def start_motion(self, name, duration=3.0):
-        """Play a time-based motion: idle | wave | walk | nod | look."""
+        """Play a time-based motion: idle | wave | walk | nod | look | run."""
         return self._post("/motion", {"name": name, "duration": duration})
 
     def drive_bones(self, bones):

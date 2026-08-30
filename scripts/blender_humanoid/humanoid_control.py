@@ -13,7 +13,7 @@ This module provides:
   - load_humanoid(): load the .blend and return the armature.
   - reset_pose() / set_bone(): low-level FK helpers.
   - pose_*(): static poses (A/T/relax).
-  - apply_*(): time-parameterized motions (idle/wave/walk/nod/look).
+  - apply_*(): time-parameterized motions (idle/wave/walk/nod/look/run).
   - MotionTimeline: sequence motions over time and drive them on every frame
     change (frame_change_pre handler), so the twin is "drivable" and can be
     rendered as an animation.
@@ -126,25 +126,31 @@ def apply_look(arm, t):
 
 
 def apply_wave(arm, t):
-    """Right arm raised, forearm up, waving hand."""
+    """Right arm raised, forearm up, waving hand.
+
+    Calibrated 2026-08-30 (probe of the FK axes with the arm abducted):
+    with upper_arm.R at local Z -90 the forearm points straight up at local
+    Z -90 (the old Z 180 folded it back into the torso), and the hand rocks
+    side-to-side around its local Z (world forward axis) = the wave.
+    """
     reset_pose(arm)
     # right upper arm out to the side, slight forward swing for the wave
-    set_bone(arm, "upper_arm.R", (-0.25 * math.sin(t * 5.0), 0, R(-90)))
-    # forearm straight up
-    set_bone(arm, "forearm.R", (0, 0, R(180)))
-    # hand waving
-    set_bone(arm, "hand.R", (0, 0, R(180) + 0.35 * math.sin(t * 6.0)))
+    set_bone(arm, "upper_arm.R", (-0.15 * math.sin(t * 5.0), 0, R(-90)))
+    # forearm folded straight up
+    set_bone(arm, "forearm.R", (0, 0, R(-90)))
+    # hand rocking side-to-side
+    set_bone(arm, "hand.R", (0, 0, 0.45 * math.sin(t * 6.0)))
     # left arm relaxed
     set_bone(arm, "upper_arm.L", (R(8), 0, R(6)))
     set_bone(arm, "forearm.L", (R(12), 0, 0))
 
 
 def apply_wave_left(arm, t):
-    """Mirror wave with the left arm (kept simple via mirrored angles)."""
+    """Mirror wave with the left arm (mirrored calibrated angles)."""
     reset_pose(arm)
-    set_bone(arm, "upper_arm.L", (-0.25 * math.sin(t * 5.0), 0, R(90)))
-    set_bone(arm, "forearm.L", (0, 0, R(180)))
-    set_bone(arm, "hand.L", (0, 0, R(180) + 0.35 * math.sin(t * 6.0)))
+    set_bone(arm, "upper_arm.L", (-0.15 * math.sin(t * 5.0), 0, R(90)))
+    set_bone(arm, "forearm.L", (0, 0, R(90)))
+    set_bone(arm, "hand.L", (0, 0, 0.45 * math.sin(t * 6.0)))
     set_bone(arm, "upper_arm.R", (R(8), 0, R(-6)))
     set_bone(arm, "forearm.R", (R(12), 0, 0))
 
@@ -174,6 +180,31 @@ def apply_walk(arm, t):
     set_bone(arm, "chest", (0.06 * math.sin(f), 0, 0))
     # vertical bob
     set_bone(arm, "root", (0, 0, 0), loc=(0, 0, 0.035 * abs(s)))
+
+
+def apply_run(arm, t):
+    """Run-in-place: faster cadence, bigger swing and forward lean than walk."""
+    f = t * 3.0  # stride frequency (walk uses 2.0)
+    s = math.sin(f)
+    c = math.cos(f)
+    reset_pose(arm)
+    # legs: larger swing + deeper knee bend
+    set_bone(arm, "thigh.L", (0.7 * s, 0, 0))
+    set_bone(arm, "thigh.R", (-0.7 * s, 0, 0))
+    set_bone(arm, "shin.L", (-0.9 + 0.45 * s, 0, 0))
+    set_bone(arm, "shin.R", (-0.9 - 0.45 * s, 0, 0))
+    set_bone(arm, "foot.L", (0.2 * (1.0 - c) / 2.0, 0, 0))
+    set_bone(arm, "foot.R", (0.2 * (1.0 + c) / 2.0, 0, 0))
+    # arms: stronger opposite swing, elbows bent ~45 deg
+    set_bone(arm, "upper_arm.L", (0.55 * math.sin(f + math.pi), 0, R(10)))
+    set_bone(arm, "upper_arm.R", (0.55 * math.sin(f), 0, R(-10)))
+    set_bone(arm, "forearm.L", (R(45), 0, 0))
+    set_bone(arm, "forearm.R", (R(45), 0, 0))
+    # pronounced forward lean + counter-sway
+    set_bone(arm, "spine", (R(12) + 0.06 * math.sin(f), 0, 0))
+    set_bone(arm, "chest", (0.08 * math.sin(f), 0, 0))
+    # stronger vertical bob
+    set_bone(arm, "root", (0, 0, 0), loc=(0, 0, 0.05 * abs(s)))
 
 
 # ---------------------------------------------------------------------------
