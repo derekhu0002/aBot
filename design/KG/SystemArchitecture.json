@@ -59,8 +59,8 @@
       "attributes": [
         {
           "name": "commit",
-          "value": "7e3f92b",
-          "description": "Humanoid model build; files: scripts/blender_humanoid/build_humanoid.py, assets/humanoid/humanoid.blend, assets/humanoid/preview_front.png, assets/humanoid/preview_3quarter.png"
+          "value": "c5615ee",
+          "description": "P1: model now drivable by local agent via twin control service; added humanoid_control.py + twin server/client"
         },
         {
           "name": "file_paths",
@@ -72,12 +72,12 @@
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "在 Blender 中构建人形角色的流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③无头渲染预览 ④提交登记。",
+      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③本地控制服务+Agent 客户端（本机 Agent 实时操控：姿势/动作/FK/状态）④提交登记。",
       "attributes": [
         {
           "name": "commit",
-          "value": "7e3f92b",
-          "description": "Process completed; Blender 5.1 headless + bpy, EEVEE render, basic armature with weight fallback."
+          "value": "c5615ee",
+          "description": "P1 完成：数字孪生可被本机 Agent 实时操控"
         }
       ]
     },
@@ -98,7 +98,14 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py。"
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "c5615ee",
+          "description": "Twin control service + client + demo; files: scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py"
+        }
+      ]
     }
   ],
   "relationships": [
