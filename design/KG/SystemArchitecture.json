@@ -111,7 +111,24 @@
       "id": "handoff-001",
       "name": "aBot 项目交接总结",
       "type": "Business Object",
-      "description": "aBot 项目交接总结（2026-08-30）：项目北极星=开发人形机器人，用 Blender 数字孪生探索软件与智能；已完成 P0 数字孪生模型 + P1 本机 Agent 实时操控（HTTP 控制服务 + TwinClient，pose/motion/FK/state）；意图图 7 元素/3 关系/5 视图；路线：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。全文存于仓库 HANDOFF.md。"
+      "description": "aBot 项目交接总结（2026-08-30）：项目北极星=开发人形机器人，用 Blender 数字孪生探索软件与智能；已完成 P0 数字孪生模型 + P1 本机 Agent 实时操控（HTTP 控制服务 + TwinClient，pose/motion/FK/state）；意图图 7 元素/3 关系/5 视图；路线：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。全文存于仓库 HANDOFF.md。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "fcb9849",
+          "description": "Handoff summary; file: HANDOFF.md, design/KG/SystemArchitecture.json"
+        },
+        {
+          "name": "file_paths",
+          "value": "HANDOFF.md"
+        }
+      ]
+    },
+    {
+      "id": "session-summary-2026-08-30",
+      "name": "会话总结 2026-08-30 (P0+P1)",
+      "type": "Business Object",
+      "description": "会话总结（2026-08-30）：目标=建立 aBot 人形机器人数字孪生并被本机 Agent 实时操控。进展：P0 程序化建模 humanoid.blend（7e3f92b）；P1 本地操控服务 twin_server + TwinClient（c5615ee），pose/motion/FK/state 全链路验证通过。关键决策：不产视频，改做实时操控接口；aBot≠ArchGraph 北极星。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。经验：无头 timers 不触发须手动 drive_once；Blender 5.1 FFMPEG 被拒用系统 ffmpeg。"
     }
   ],
   "relationships": [
@@ -193,7 +210,8 @@
         "humanoid-build-001",
         "abot-vision-001",
         "twin-control-001",
-        "handoff-001"
+        "handoff-001",
+        "session-summary-2026-08-30"
       ],
       "included_relationships": [
         "humanoid-model-serves-abot-vision",
