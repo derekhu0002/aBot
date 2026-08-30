@@ -55,7 +55,7 @@
       "name": "Humanoid Character Model (Blender)",
       "alias": "humanoid-model-001",
       "type": "Artifact",
-      "description": "程序化生成的 chibi 机器人 3D 模型（Blender 5.1 无头 + bpy），2026-08-30 按 reference_target.png 改造并经视觉分析员第二轮差距修复：超大红铜金属头盔 + 黑色圆角矩形弯曲面罩（球壳布尔贴合头部曲率 + 扫描线质感 + 金/奶油包边）+ 贴合面罩的绿色自发光三角眼 + 耳罩/顶带/天线 + 头盔铆钉/面板缝；小躯干装甲（胸口自发光三角徽记 + 腰带饰边）；分段机械臂（圆润手掌 + 三指 + 拇指，消除多面块）；厚靴（圆润金色鞋底、奶油靴口、青色线缆环，删除灰色平板底座），总高约 1.22m chibi 比例。保留 twin-control FK 骨架（root/spine/chest/neck/head + L/R 四肢同名骨）与蒙皮，FK 姿势变形冒烟通过。输出 .blend、两张 1280x1280 预览与面罩/手部特写，二进制存于仓库。",
+      "description": "程序化生成的 chibi 机器人 3D 模型（Blender 5.1 无头 + bpy），2026-08-30 按 reference_target.png 改造并经视觉分析员第二轮差距修复：超大红铜金属头盔 + 黑色圆角矩形弯曲面罩（球壳布尔贴合头部曲率 + 扫描线质感 + 金/奶油包边）+ 贴合面罩的绿色自发光三角眼 + 耳罩/顶带/天线 + 头盔铆钉/面板缝；小躯干装甲（胸口自发光三角徽记 + 腰带饰边）；分段机械臂（圆润手掌 + 三指 + 拇指，消除多面块）；厚靴（圆润金色鞋底、奶油靴口、青色线缆环，删除灰色平板底座），总高约 1.22m chibi 比例。保留 twin-control FK 骨架（root/spine/chest/neck/head + L/R 四肢同名骨）；蒙皮为刚性按部件绑定（每个连通网格岛绑定最近骨骼，2026-08-30 动作证据轮替换漏权的 bone-heat 自动权重，抬臂姿势不再拉伸躯干）。输出 .blend、两张 1280x1280 预览、面罩/手部特写与 9 张统一前相机的关键动作证据图 action_<relax|tpose|apose|idle|wave|walk|nod|look|run>.png，二进制存于仓库。",
       "attributes": [
         {
           "name": "commit",
@@ -99,6 +99,11 @@
           "name": "commit",
           "value": "9ae0e65",
           "description": "regenerated humanoid.blend + previews with gap fixes; added preview_closeup_visor.png / preview_closeup_hand.png"
+        },
+        {
+          "name": "commit",
+          "value": "12a5a1d",
+          "description": "rigid per-part skinned humanoid.blend + 9 action evidence stills action_*.png; regenerated previews; files: assets/humanoid/humanoid.blend, assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png, assets/humanoid/preview_*.png"
         }
       ],
       "testcases": [
@@ -115,7 +120,7 @@
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle + 第二轮视觉差距修复：球壳∩圆角棱柱布尔产出贴合头部曲率的弯曲面罩/包边/贴平三角眼，布尔后必须 clear 空材质槽再指定材质否则渲染默认白；圆润手掌+手指、金色圆润鞋底替代灰色平板、靴侧线缆环替代尖刺、铆钉/面板缝/腰带硬表面细节；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply；ABOT_HUMANOID_OUT_DIR 可复现）③本地控制服务+Agent 客户端（姿势/动作/FK/状态）④提交登记。",
+      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle + 第二轮视觉差距修复：球壳∩圆角棱柱布尔产出贴合头部曲率的弯曲面罩/包边/贴平三角眼，布尔后必须 clear 空材质槽再指定材质否则渲染默认白；圆润手掌+手指、金色圆润鞋底替代灰色平板、靴侧线缆环替代尖刺、铆钉/面板缝/腰带硬表面细节；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply；蒙皮=刚性按部件绑定：连通岛质心最近骨骼绑权重 1.0，fix_weights 仅补空组；ABOT_HUMANOID_OUT_DIR 可复现）③本地控制服务+Agent 客户端（姿势/动作/FK/状态；wave 校准、run 高阶动作；9 关键动作统一前相机证据图）④提交登记。",
       "attributes": [
         {
           "name": "commit",
@@ -135,6 +140,11 @@
           "name": "commit",
           "value": "1a259d0",
           "description": "round-2 gap fixes in build_humanoid.py (boolean shell visor/eyes, material-slot fix, fingered hands, gold soles, cables, rivets)"
+        },
+        {
+          "name": "commit",
+          "value": "3477a39",
+          "description": "rigid per-part skinning in build pipeline (replaces leaky bone-heat auto weights) + fix_weights existing_ok scan fix; files: scripts/blender_humanoid/build_humanoid.py"
         }
       ],
       "testcases": [
@@ -164,12 +174,31 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py。",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py；动作契约验收 tests/acceptance/test_humanoid_actions.py。",
       "attributes": [
         {
           "name": "commit",
           "value": "c5615ee",
           "description": "Twin control service + client + demo; files: scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py"
+        },
+        {
+          "name": "commit",
+          "value": "3477a39",
+          "description": "calibrated wave + run motion + rigid skinning + action evidence renderer + action contract test; files: scripts/blender_humanoid/{humanoid_control,twin_server,twin_client,calibrate_poses,build_humanoid,render_action_evidence}.py, tests/acceptance/test_humanoid_actions.py"
+        },
+        {
+          "name": "commit",
+          "value": "12a5a1d",
+          "description": "9 key-action evidence stills assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png (uniform front camera 1280x1280) + rigid-skinned humanoid.blend"
+        }
+      ],
+      "testcases": [
+        {
+          "name": "twin-control-key-actions-contract",
+          "type": "Acceptance Test",
+          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点） THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 右上臂外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad；look 头偏航≥0.45rad；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG。",
+          "Input": "assets/humanoid/humanoid.blend + assets/humanoid/action_*.png + scripts/blender_humanoid/humanoid_control.py",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py"
         }
       ]
     },
@@ -396,6 +425,24 @@
           "description": "Chibi final review record registered by visual-analyst; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260830-action-evidence",
+      "name": "建模记忆 2026-08-30 (key actions evidence + rigid skinning)",
+      "type": "Business Object",
+      "description": "会话记录（2026-08-30，机器人3D建模员）：驱动 chibi 机器人完成 9 个关键动作并输出统一前相机 1280x1280 证据图 action_<relax|tpose|apose|idle|wave|walk|nod|look|run>.png。交付：①render_action_evidence.py（统一相机 + ACTION_FACTS 外部观测量）；②humanoid_control.py 新增高阶动作 apply_run（更快频率/更大摆幅/前倾/后踢），twin server/client 文档同步 run；③wave 校准：臂外展时前臂 local Z -90(.R)/+90(.L) 折起向上、手部 local Z 摆动（旧 Z 180 折回躯干）；④蒙皮根因修复：bone-heat 自动权重把躯干顶点绑到下垂臂骨致 wave/tpose 拉伸躯干 → 改连通岛最近骨骼刚性绑定（分段机械人设契合），并修复 fix_weights 的 existing_ok 扫描遇 RuntimeError 即 break 误删非空权重组的潜伏 bug；⑤新增可执行验收 test_humanoid_actions.py（9 动作外部骨架签名 + 证据图断言），登记于 twin-control-001。回归 5 测试全过 + validate 过。多模态目检结论：9 动作全部达标（idle 按设计细微，静帧近似 relax 但胸腔振荡可量化；wave 校准后手势清晰）。坑：①fix_weights 的 RuntimeError-break 会使新权重被高斯漏权覆盖——改权重后必须驱动渲染验证；②wave 前臂轴向须实证探测，不可凭 docstring 约定推断；③旧 driven_*.png 为 restyle 前旧模型产物，仅历史参考价值。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "3477a39",
+          "description": "scripts + action contract test"
+        },
+        {
+          "name": "commit",
+          "value": "12a5a1d",
+          "description": "action evidence stills + rigid-skinned blend"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -508,7 +555,8 @@
       "description": "机器人3D建模员（robot-modeler-001）的长期记忆子视图，挂载于 Actor 之下，承载建模侧历史工作信息。",
       "included_elements": [
         "rm-mem-20260830-chibi-restyle",
-        "rm-mem-20260830-gapfixes-round2"
+        "rm-mem-20260830-gapfixes-round2",
+        "rm-mem-20260830-action-evidence"
       ],
       "included_relationships": []
     }
