@@ -64,7 +64,7 @@
         },
         {
           "name": "file_paths",
-          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/preview_closeup_visor.png; assets/humanoid/preview_closeup_hand.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py"
+          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/preview_closeup_visor.png; assets/humanoid/preview_closeup_hand.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py; assets/humanoid/action_relax.png; assets/humanoid/action_tpose.png; assets/humanoid/action_apose.png; assets/humanoid/action_idle.png; assets/humanoid/action_wave.png; assets/humanoid/action_walk.png; assets/humanoid/action_nod.png; assets/humanoid/action_look.png; assets/humanoid/action_run.png"
         },
         {
           "name": "commit",
@@ -104,6 +104,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "646ede1",
+          "description": "regenerated 9 action evidence stills with fixed wave (anatomical right arm), look (horizontal yaw), nod (deeper pitch); same unified front camera"
         }
       ],
       "testcases": [
@@ -120,7 +125,7 @@
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle + 第二轮视觉差距修复：球壳∩圆角棱柱布尔产出贴合头部曲率的弯曲面罩/包边/贴平三角眼，布尔后必须 clear 空材质槽再指定材质否则渲染默认白；圆润手掌+手指、金色圆润鞋底替代灰色平板、靴侧线缆环替代尖刺、铆钉/面板缝/腰带硬表面细节；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply；蒙皮=刚性按部件绑定：连通岛质心最近骨骼绑权重 1.0，fix_weights 仅补空组；ABOT_HUMANOID_OUT_DIR 可复现）③本地控制服务+Agent 客户端（姿势/动作/FK/状态；wave 校准、run 高阶动作；9 关键动作统一前相机证据图）④提交登记。",
+      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle + 第二轮视觉差距修复：球壳∩圆角棱柱布尔产出贴合头部曲率的弯曲面罩/包边/贴平三角眼，布尔后必须 clear 空材质槽再指定材质否则渲染默认白；圆润手掌+手指、金色圆润鞋底替代灰色平板、靴侧线缆环替代尖刺、铆钉/面板缝/腰带硬表面细节；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply；蒙皮=刚性按部件绑定：连通岛质心最近骨骼绑权重 1.0，fix_weights 仅补空组；ABOT_HUMANOID_OUT_DIR 可复现）③本地控制服务+Agent 客户端（姿势/动作/FK/状态；wave 校准、run 高阶动作；9 关键动作统一前相机证据图）④提交登记。2026-08-30 视觉复核修正：wave 改举解剖学右臂（'.L' 骨链，world -X）、look 改水平 yaw（head 骨 local Y）、nod 加深至 0.45rad；左右约定（'.L'=解剖学右）与头轴约定（X=pitch/Y=yaw/Z=roll）文档化于 humanoid_control.py docstring。",
       "attributes": [
         {
           "name": "commit",
@@ -145,6 +150,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "646ede1",
+          "description": "wave/look/nod axis+side fixes with documented side/head-axis conventions; files: scripts/blender_humanoid/humanoid_control.py, scripts/blender_humanoid/demo_agent.py, tests/acceptance/test_humanoid_actions.py"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py"
         }
       ],
       "testcases": [
@@ -194,13 +208,22 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "646ede1",
+          "description": "wave raises anatomical right arm ('.L' chain), look = horizontal yaw, deeper nod; action contract test aligned; files: scripts/blender_humanoid/humanoid_control.py, scripts/blender_humanoid/demo_agent.py, tests/acceptance/test_humanoid_actions.py, assets/humanoid/action_*.png"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py"
         }
       ],
       "testcases": [
         {
           "name": "twin-control-key-actions-contract",
           "type": "Acceptance Test",
-          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点） THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 右上臂外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad；look 头偏航≥0.45rad；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG。",
+          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点） THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 解剖学右臂（rig 的 '.L' 骨链，world -X，前相机下屏幕左；机器人面朝 -Y，'.R' 链=解剖学左）外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad（幅度已加深至 0.45rad）；look 头水平 yaw（head 骨 local Y = 世界竖直轴）≥0.45rad 且面内 roll 保持小；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG。",
           "Input": "assets/humanoid/humanoid.blend + assets/humanoid/action_*.png + scripts/blender_humanoid/humanoid_control.py",
           "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py"
         }
@@ -352,6 +375,10 @@
         {
           "view_id": "view-rm-memory-001",
           "view_name": "机器人3D建模员长期记忆"
+        },
+        {
+          "view_id": "view-rm-wm-001",
+          "view_name": "机器人3D建模员工作记忆"
         }
       ]
     },
@@ -458,6 +485,43 @@
           "name": "commit",
           "value": "af3d1ec",
           "description": "Action review record registered by visual-analyst; files: design/KG/SystemArchitecture.json"
+        }
+      ]
+    },
+    {
+      "id": "rm-mem-20260830-action-axis-fix",
+      "name": "建模记忆 2026-08-30 (wave/look/nod axis+side fix)",
+      "type": "Business Object",
+      "description": "会话记录（2026-08-30，机器人3D建模员）：修正视觉分析员复核指出的 2 项 + nod 微调。①wave 侧别：根因 build_humanoid 以 ('L',-1)/('R',1) 建骨而机器人面朝 -Y → rig '.L' 链在 world -X = 解剖学右（屏幕左），'.R' = 解剖学左；旧 apply_wave 驱动 '.R' 即举左臂。现 apply_wave 驱动 '.L' 链（外展90°、肘90°、前臂竖直、手在头侧、对侧臂下垂），apply_wave_left 镜像 '.R'。②look 轴向：旧实现绕 head local Z（=world -Y）= 面内 roll 歪头；改绕 local Y（=世界竖直轴）yaw，峰值 0.55rad，面罩侧转、对侧耳罩被遮挡，roll=0。③nod 幅度 0.22→0.45rad。约定文档化于 humanoid_control.py docstring（SIDE CONVENTION + HEAD AXES）；test_humanoid_actions.py 断言对齐新行为（wave 断言 '.L' 链外展/手高/对侧低垂，look 断言 Y 分量≥0.45 且 roll≤0.15）。重渲 9 证据图（同前相机），目检 3 图达标，5 验收测试 + validate 过，commit 646ede1。坑：①rig 骨名 L/R 与解剖学左右相反，禁止凭后缀推断左右；②head 骨 local X=pitch、Y=yaw、Z=roll；③改轴/改侧后必须渲染+目检实证，不可信 docstring。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "name": "commit",
+          "value": "646ede1",
+          "description": "wave/look/nod fixes + aligned action contract test + regenerated evidence stills"
+        }
+      ]
+    },
+    {
+      "id": "rm-wm-summary-001",
+      "name": "robot-modeler T1 会话总结",
+      "type": "Business Object",
+      "description": "会话总结（2026-08-30，动作轴向修正轮）：目标=修正视觉分析员指出的 wave 举臂侧别（改解剖学右臂）与 look 轴向（roll→yaw）+ nod 俯角加深。完成：humanoid_control.py apply_wave 改驱 '.L' 链、apply_look 改 local Y yaw 0.55rad、apply_nod 0.22→0.45rad；test_humanoid_actions.py 断言按新正确行为更新；重渲 9 张证据图（同前相机）；多模态目检 wave/look/nod 全达标；5 验收测试 + validateSystemArchitecture 通过；commit 646ede1 登记于 twin-control-001/humanoid-build-001/humanoid-model-001 并写入 view-rm-memory-001。关键决策：不改骨名（保 FK 契约与 twin-control 链路），左右约定以 docstring 文档化（'.L' 链=解剖学右，world -X=屏幕左）。遗留：无阻断项。经验：rig 命名与解剖学相反是长期陷阱；head 骨 X=pitch/Y=yaw/Z=roll。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T1"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "lastSummaryAt",
+          "value": "2026-08-30"
         }
       ]
     }
@@ -574,7 +638,18 @@
       "included_elements": [
         "rm-mem-20260830-chibi-restyle",
         "rm-mem-20260830-gapfixes-round2",
-        "rm-mem-20260830-action-evidence"
+        "rm-mem-20260830-action-evidence",
+        "rm-mem-20260830-action-axis-fix"
+      ],
+      "included_relationships": []
+    },
+    {
+      "view_id": "view-rm-wm-001",
+      "view_name": "机器人3D建模员工作记忆",
+      "parent_element_id": "robot-modeler-001",
+      "description": "robot-modeler-001 的 T1 工作记忆子视图（会话总结，幂等覆盖）。",
+      "included_elements": [
+        "rm-wm-summary-001"
       ],
       "included_relationships": []
     }
