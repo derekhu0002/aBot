@@ -87,10 +87,6 @@
           "description": "KG acceptance testcases registered on humanoid-model-001/humanoid-build-001"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "1a259d0",
           "description": "round-2 visual gap fixes: curved scanline visor + gold rim + hugging eyes, fingered hands, gold sole pucks, boot cable loops, rivets/panel seams/belt; extended model acceptance test with external geometry assertions"
@@ -104,6 +100,10 @@
           "name": "commit",
           "value": "12a5a1d",
           "description": "rigid per-part skinned humanoid.blend + 9 action evidence stills action_*.png; regenerated previews; files: assets/humanoid/humanoid.blend, assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png, assets/humanoid/preview_*.png"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -133,10 +133,6 @@
           "description": "restyle to chibi robot + reproducibility override + acceptance tests"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "1a259d0",
           "description": "round-2 gap fixes in build_humanoid.py (boolean shell visor/eyes, material-slot fix, fingered hands, gold soles, cables, rivets)"
@@ -145,6 +141,10 @@
           "name": "commit",
           "value": "3477a39",
           "description": "rigid per-part skinning in build pipeline (replaces leaky bone-heat auto weights) + fix_weights existing_ok scan fix; files: scripts/blender_humanoid/build_humanoid.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -190,6 +190,10 @@
           "name": "commit",
           "value": "12a5a1d",
           "description": "9 key-action evidence stills assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png (uniform front camera 1280x1280) + rigid-skinned humanoid.blend"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
