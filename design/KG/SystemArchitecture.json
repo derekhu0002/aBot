@@ -55,7 +55,7 @@
       "name": "Humanoid Character Model (Blender)",
       "alias": "humanoid-model-001",
       "type": "Artifact",
-      "description": "程序化生成的人形 3D 角色模型（Blender 5.1 无头 + bpy）。比例基于人体解剖、基元建模 + 细分曲面 + 平滑着色、皮肤/头发/眼睛/衣物材质、简易骨骼绑定（含 L/R 四肢骨架）。输出 .blend 与渲染预览图，二进制存于仓库。",
+      "description": "程序化生成的 chibi 机器人 3D 模型（Blender 5.1 无头 + bpy），2026-08-30 按 reference_target.png 改造：超大红铜金属头盔+黑色圆角面罩+绿色自发光三角眼+耳罩/顶部饰带/天线、小躯干装甲（胸口自发光三角徽记）、分段机械臂、厚靴（奶油鞋头+青色点缀），总高约 1.2m、head 骨主导跨度 47% 的 chibi 比例。保留 twin-control FK 骨架（root/spine/chest/neck/head + L/R 四肢同名骨）与自动权重+距离衰减兜底，pose/motion/FK/state 链路冒烟通过。输出 .blend 与两张 1280x1280 预览图，二进制存于仓库。",
       "attributes": [
         {
           "name": "commit",
@@ -64,7 +64,27 @@
         },
         {
           "name": "file_paths",
-          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; scripts/blender_humanoid/build_humanoid.py"
+          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py"
+        },
+        {
+          "name": "commit",
+          "value": "b5c099f",
+          "description": "reference target image added"
+        },
+        {
+          "name": "commit",
+          "value": "b752b0c",
+          "description": "chibi robot restyle of build_humanoid.py + model/build acceptance tests"
+        },
+        {
+          "name": "commit",
+          "value": "2a02f06",
+          "description": "regenerated humanoid.blend + preview evidence"
+        },
+        {
+          "name": "commit",
+          "value": "87d6838",
+          "description": "KG acceptance testcases registered on humanoid-model-001/humanoid-build-001"
         }
       ],
       "testcases": [
@@ -81,12 +101,17 @@
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型 ③本地控制服务+Agent 客户端（本机 Agent 实时操控：姿势/动作/FK/状态）④提交登记。",
+      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle：按 reference_target.png 产出 chibi 机器人外观；ABOT_HUMANOID_OUT_DIR 可重定向输出目录做可复现验证；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply）③本地控制服务+Agent 客户端（本机 Agent 实时操控：姿势/动作/FK/状态）④提交登记。",
       "attributes": [
         {
           "name": "commit",
           "value": "c5615ee",
           "description": "P1 完成：数字孪生可被本机 Agent 实时操控"
+        },
+        {
+          "name": "commit",
+          "value": "b752b0c",
+          "description": "restyle to chibi robot + reproducibility override + acceptance tests"
         }
       ],
       "testcases": [
@@ -266,7 +291,13 @@
           "type": "Acceptance Test"
         }
       ],
-      "type": "Business Actor"
+      "type": "Business Actor",
+      "subdiagram_views": [
+        {
+          "view_id": "view-rm-memory-001",
+          "view_name": "机器人3D建模员长期记忆"
+        }
+      ]
     },
     {
       "description": "会话记录（2026-08-30，机器人3D建模员）：应人类伙伴要求创建 aBot 机器人3D建模员 Business Actor（robot-modeler-001），模型=alibaba-cn/qwen3.8-max（Qwen3.8 多模态），agent 属性=robot-modeler；创建 opencode agent 定义 .opencode/agent/robot-modeler.md（mode=subagent，可 edit/bash 以执行 Blender/bpy 建模与孪生修复）；按 AcceptanceTestFirst 新增可执行验收测试 robot-modeler-actor-opencode-agent-consistency（tests/acceptance/test_robot_modeler.py），与 visual-analyst 回归全部通过且 DELIVERED；validateSystemArchitecture 通过。背景：视觉分析员已判定孪生蒙皮/权重缺陷（手臂从骨盆拉伸成飘带），建模员可用于修复。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐。",
@@ -283,6 +314,19 @@
           "name": "commit",
           "value": "988b9d4",
           "description": "关键决策：robot-modeler 定位为 aBot 主要建模 AGENT，职责泛化（负责全部 3D 建模工作），不绑定当前 Blender 具体实现，随项目演进承担建模侧新需求；agent 定义与 Actor 描述同步泛化"
+        }
+      ]
+    },
+    {
+      "id": "rm-mem-20260830-chibi-restyle",
+      "name": "建模记忆 2026-08-30 (chibi robot restyle)",
+      "type": "Business Object",
+      "description": "会话记录（2026-08-30，机器人3D建模员）：按人类伙伴要求把数字孪生从人比例角色 restyle 为 reference_target.png 的 chibi 机器人。交付：重写 build_humanoid.py（chibi 比例 ~1.2m、红铜金属+奶油金+黑面罩+绿自发光三角眼+耳罩/顶带/厚靴/青色点缀、橙色背景）、重生 humanoid.blend+两张预览；新增并在 KG 登记可执行验收 test_humanoid_model.py / test_humanoid_build.py（补齐 humanoid-model-001/humanoid-build-001 缺失用例）。回归全过（模型/构建/actor 一致性 x2），validateSystemArchitecture 过，twin-control 冒烟（pose/walk/wave/FK）OK。关键坑：①基元改 radius=1/depth=2（scale=半尺寸），旧 radius=0.5 使部件半大→渲染散架；②join 前逐部件应用 subsurf（join 后残留 subsurf 收缩孤立岛）；③join 后 transform_apply 烘焙变换（非均匀 object scale 扭曲骨架变形，旧飘带蒙皮根因之一）；④Standard 色彩变换保霓虹自发光（AgX 冲淡）；⑤面部朝 -Y 对准前相机；⑥ABOT_HUMANOID_OUT_DIR 可复现构建。遗留：wave 动作在下垂臂骨架上仍可校准（calibrate_poses.py）；细致外观复核可委派 visual-analyst-001。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "b752b0c",
+          "description": "chibi restyle deliverables recorded by this memory entry"
         }
       ]
     }
@@ -384,6 +428,17 @@
       "parent_element_id": "visual-analyst-001",
       "included_elements": [
         "va-mem-20260830-humanoid-render"
+      ],
+      "included_relationships": []
+    },
+    {
+      "view_id": "view-rm-memory-001",
+      "view_name": "机器人3D建模员长期记忆",
+      "parent_element_id": "robot-modeler-001",
+      "parent_element_name": "机器人3D建模员",
+      "description": "机器人3D建模员（robot-modeler-001）的长期记忆子视图，挂载于 Actor 之下，承载建模侧历史工作信息。",
+      "included_elements": [
+        "rm-mem-20260830-chibi-restyle"
       ],
       "included_relationships": []
     }

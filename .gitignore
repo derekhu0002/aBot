@@ -1,4 +1,5 @@
 .argo/
 __pycache__/
 *.pyc
+*.blend1
 
