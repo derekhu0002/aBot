@@ -1,32 +1,46 @@
-"""Procedurally build a stylized 3D humanoid character in Blender (headless).
+"""Procedurally build a chibi robot 3D character in Blender (headless).
 
 Design decisions
 ----------------
 - Blender 5.1 has no bundled human generator addon, so the character is built
   from primitives via the bpy Python API.
-- Human-like proportions (approx. 1.75 m tall, feet at z=0, head top ~1.80).
-- Subdivision surface + smooth shading for clean, low-poly-count visuals.
-- Simple PBR-ish materials: skin, hair, eyes (white + iris + pupil), shirt,
-  pants, shoes.
-- A basic armature (root -> spine -> chest -> neck -> head, plus L/R limbs)
-  is added and the joined mesh is parented with automatic weights so the
-  character can be posed.
+- Restyled after assets/humanoid/reference_target.png: a chibi toy robot with
+  an oversized helmet (metallic red + cream trim), a dark rounded visor with
+  two emissive green triangle eyes, ear pods + antenna nubs, a small armored
+  torso with an emissive chest emblem, segmented arms and chunky boots.
+- Chibi proportions: ~1.2 m tall, helmet spans roughly the upper half.
+- Primitive convention: spheres/cylinders/cones are created with radius 1 and
+  depth 2, cubes with size 2, so object scale equals the part's half-extents
+  (radii). Subdivision surfaces are APPLIED per part before joining, so the
+  joined mesh keeps final geometry (a live subsurf on the joined mesh would
+  shrink every disconnected island).
+- Metallic / emissive Principled materials: robot red, maroon, cream trim,
+  dark joints, near-black visor, emissive green eyes, emissive emblem, cyan
+  accents. View transform 'Standard' for the saturated toy look.
+- The same FK armature layout (root -> spine -> chest -> neck -> head, plus
+  L/R shoulder/upper_arm/forearm/hand/thigh/shin/foot) is kept so the twin
+  control chain (humanoid_control.py / twin_server.py) keeps working; the
+  joined mesh is parented with automatic weights + distance-falloff fallback.
+- Output paths can be redirected with ABOT_HUMANOID_OUT_DIR (used by the
+  reproducibility acceptance test); default is assets/humanoid.
 
 Run headless:
     blender -b -P scripts/blender_humanoid/build_humanoid.py
 """
 
 import math
+import os
 
 import bpy
 from mathutils import Vector
 
 # ---------------------------------------------------------------------------
-# Output paths (edit as needed)
+# Output paths (ABOT_HUMANOID_OUT_DIR overrides for reproducible test builds)
 # ---------------------------------------------------------------------------
-BLEND_OUT = r"D:\Projects\aBot\assets\humanoid\humanoid.blend"
-RENDER_FRONT = r"D:\Projects\aBot\assets\humanoid\preview_front.png"
-RENDER_THREEQUARTER = r"D:\Projects\aBot\assets\humanoid\preview_3quarter.png"
+OUT_DIR = os.environ.get("ABOT_HUMANOID_OUT_DIR", r"D:\Projects\aBot\assets\humanoid")
+BLEND_OUT = os.path.join(OUT_DIR, "humanoid.blend")
+RENDER_FRONT = os.path.join(OUT_DIR, "preview_front.png")
+RENDER_THREEQUARTER = os.path.join(OUT_DIR, "preview_3quarter.png")
 
 # ---------------------------------------------------------------------------
 # Scene helpers
@@ -45,7 +59,8 @@ def clear_scene():
             bpy.data.collections.remove(col)
 
 
-def make_material(name, color, roughness=0.45, metallic=0.0, emission=None):
+def make_material(name, color, roughness=0.45, metallic=0.0, emission=None,
+                  emission_strength=1.0):
     """Create a Principled BSDF material."""
     mat = bpy.data.materials.new(name)
     mat.use_nodes = True
@@ -55,24 +70,28 @@ def make_material(name, color, roughness=0.45, metallic=0.0, emission=None):
     bsdf.inputs["Metallic"].default_value = metallic
     if emission is not None:
         bsdf.inputs["Emission Color"].default_value = (*emission, 1.0)
-        bsdf.inputs["Emission Strength"].default_value = 1.0
+        bsdf.inputs["Emission Strength"].default_value = emission_strength
     return mat
 
 
 def make_primitive(kind, name, location, scale, rotation=(0.0, 0.0, 0.0),
                    segments=32, material=None, subdiv=2):
-    """Create a primitive mesh object, position it, shade smooth, subdivide."""
+    """Create a primitive whose object scale equals its half-extents.
+
+    Subdivision (if any) is applied immediately so joined meshes keep their
+    final shape.
+    """
     ops = {
         "sphere": lambda: bpy.ops.mesh.primitive_uv_sphere_add(
-            radius=0.5, segments=segments, ring_count=max(segments // 2, 8),
+            radius=1.0, segments=segments, ring_count=max(segments // 2, 8),
             location=location, rotation=rotation),
         "cylinder": lambda: bpy.ops.mesh.primitive_cylinder_add(
-            radius=0.5, depth=1.0, vertices=segments,
+            radius=1.0, depth=2.0, vertices=segments,
             location=location, rotation=rotation),
         "cube": lambda: bpy.ops.mesh.primitive_cube_add(
-            size=1.0, location=location, rotation=rotation),
+            size=2.0, location=location, rotation=rotation),
         "cone": lambda: bpy.ops.mesh.primitive_cone_add(
-            radius1=0.5, radius2=0.35, depth=1.0, vertices=segments,
+            radius1=1.0, radius2=0.7, depth=2.0, vertices=segments,
             location=location, rotation=rotation),
     }
     ops[kind]()
@@ -82,41 +101,96 @@ def make_primitive(kind, name, location, scale, rotation=(0.0, 0.0, 0.0),
     if material is not None:
         obj.data.materials.append(material)
     bpy.ops.object.shade_smooth()
-    if subdiv and kind in ("sphere", "cylinder", "cone"):
+    if subdiv and kind in ("sphere", "cylinder", "cone", "cube"):
         mod = obj.modifiers.new("Subdivision", "SUBSURF")
         mod.levels = subdiv
         mod.render_levels = subdiv
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_apply(modifier=mod.name)
     return obj
 
 
-# ---------------------------------------------------------------------------
-# Materials
-# ---------------------------------------------------------------------------
-SKIN = (0.96, 0.76, 0.64)
-HAIR = (0.13, 0.09, 0.07)
-EYE_WHITE = (0.95, 0.94, 0.92)
-IRIS = (0.24, 0.42, 0.62)
-PUPIL = (0.02, 0.02, 0.02)
-SHIRT = (0.10, 0.40, 0.44)
-PANTS = (0.13, 0.17, 0.30)
-SHOES = (0.16, 0.16, 0.18)
-MOUTH = (0.55, 0.35, 0.30)
+def make_torus(name, major, minor, material):
+    """Create a torus at the origin (ring in local XY plane), shade smooth."""
+    bpy.ops.mesh.primitive_torus_add(major_radius=major, minor_radius=minor,
+                                     major_segments=64, minor_segments=12,
+                                     location=(0.0, 0.0, 0.0))
+    obj = bpy.context.active_object
+    obj.name = name
+    if material is not None:
+        obj.data.materials.append(material)
+    bpy.ops.object.shade_smooth()
+    return obj
+
+
+def delete_verts_below(obj, axis="x", value=0.0):
+    """Delete mesh vertices whose local coordinate on `axis` is < value."""
+    import bmesh
+    me = obj.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    idx = {"x": 0, "y": 1, "z": 2}[axis]
+    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co[idx] < value],
+                     context="VERTS")
+    bm.to_mesh(me)
+    bm.free()
+
+
+def add_triangle_outline(parts, kind_name, center, side, thickness, material):
+    """Add three thin cylinders forming an upright triangle outline.
+
+    `center` is (x, y, z); the triangle lies in the X-Z plane facing -Y.
+    """
+    h = side * 0.5
+    cz = center[2]
+    top = (0.0, h)
+    left = (-side * 0.5, -h * 0.72)
+    right = (side * 0.5, -h * 0.72)
+    edges = ((left, right), (left, top), (top, right))
+    for i, (a, b) in enumerate(edges):
+        mx = (a[0] + b[0]) / 2.0
+        mz = (a[1] + b[1]) / 2.0
+        dx = b[0] - a[0]
+        dz = b[1] - a[1]
+        length = math.sqrt(dx * dx + dz * dz) * 0.95
+        ang = math.atan2(dx, dz)  # rotation about Y tilts the cylinder axis
+        obj = make_primitive("cylinder", "%s_e%d" % (kind_name, i),
+                             Vector((center[0] + mx, center[1], cz + mz)),
+                             Vector((thickness, thickness, length / 2.0)),
+                             rotation=(0.0, ang, 0.0), material=material,
+                             subdiv=0)
+        parts.append(obj)
+
 
 # ---------------------------------------------------------------------------
-# Build the humanoid
+# Materials (robot palette after reference_target.png)
+# ---------------------------------------------------------------------------
+ROBOT_RED = (0.42, 0.06, 0.05)
+ROBOT_MAROON = (0.20, 0.03, 0.04)
+CREAM = (0.80, 0.62, 0.30)
+DARK_JOINT = (0.04, 0.04, 0.05)
+VISOR = (0.01, 0.01, 0.012)
+EYE_GREEN = (0.02, 0.05, 0.02)
+EMBLEM = (0.05, 0.05, 0.02)
+CYAN = (0.0, 0.55, 0.65)
+
+# ---------------------------------------------------------------------------
+# Build the chibi robot
 # ---------------------------------------------------------------------------
 def build_humanoid():
     clear_scene()
 
-    mat_skin = make_material("Skin", SKIN, roughness=0.55)
-    mat_hair = make_material("Hair", HAIR, roughness=0.75)
-    mat_eye_white = make_material("EyeWhite", EYE_WHITE, roughness=0.25)
-    mat_iris = make_material("Iris", IRIS, roughness=0.20)
-    mat_pupil = make_material("Pupil", PUPIL, roughness=0.10)
-    mat_shirt = make_material("Shirt", SHIRT, roughness=0.60)
-    mat_pants = make_material("Pants", PANTS, roughness=0.65)
-    mat_shoes = make_material("Shoes", SHOES, roughness=0.35)
-    mat_mouth = make_material("Mouth", MOUTH, roughness=0.50)
+    mat_red = make_material("RobotRed", ROBOT_RED, roughness=0.30, metallic=0.85)
+    mat_maroon = make_material("RobotMaroon", ROBOT_MAROON, roughness=0.40,
+                               metallic=0.80)
+    mat_cream = make_material("CreamTrim", CREAM, roughness=0.30, metallic=0.70)
+    mat_dark = make_material("DarkJoint", DARK_JOINT, roughness=0.50, metallic=0.60)
+    mat_visor = make_material("Visor", VISOR, roughness=0.15, metallic=0.10)
+    mat_eye = make_material("EyeGlow", EYE_GREEN, roughness=0.30,
+                            emission=(0.0, 1.0, 0.05), emission_strength=4.0)
+    mat_emblem = make_material("EmblemGlow", EMBLEM, roughness=0.30,
+                               emission=(0.7, 1.0, 0.0), emission_strength=3.0)
+    mat_cyan = make_material("CyanAccent", CYAN, roughness=0.30, metallic=0.50)
 
     parts = []
 
@@ -126,110 +200,99 @@ def build_humanoid():
         parts.append(obj)
         return obj
 
-    # ---- Torso / hips / chest --------------------------------------------
-    add("sphere", "Hips", (0.0, 0.0, 0.88), (0.115, 0.105, 0.12), mat_skin, subdiv=3)
-    add("sphere", "Torso", (0.0, 0.0, 1.22), (0.135, 0.105, 0.17), mat_skin, subdiv=3)
-    add("sphere", "Chest", (0.0, 0.0, 1.44), (0.125, 0.095, 0.10), mat_skin, subdiv=3)
-    add("sphere", "Neck", (0.0, 0.0, 1.56), (0.045, 0.045, 0.05), mat_skin, subdiv=2)
-
-    # ---- Head and face ----------------------------------------------------
-    add("sphere", "Head", (0.0, 0.0, 1.70), (0.095, 0.105, 0.115), mat_skin, subdiv=3)
-    # nose
-    add("cone", "Nose", (0.0, 0.088, 1.70), (0.018, 0.025, 0.045), mat_skin,
-        rotation=(math.radians(90), 0, 0), subdiv=0)
-    # ears
-    add("sphere", "Ear_L", (-0.098, 0.0, 1.70), (0.018, 0.028, 0.040), mat_skin, subdiv=0)
-    add("sphere", "Ear_R", (0.098, 0.0, 1.70), (0.018, 0.028, 0.040), mat_skin, subdiv=0)
-
-    # eyes (white sphere + iris + pupil)
+    # ---- Helmet (oversized head) ------------------------------------------
+    add("sphere", "Helmet", (0.0, 0.0, 0.92), (0.30, 0.30, 0.28), mat_red, subdiv=2)
+    # cream stripe band over the crown (front-to-back)
+    stripe = make_torus("HelmetStripe", 0.27, 0.03, mat_cream)
+    delete_verts_below(stripe, axis="x", value=0.0)
+    stripe.rotation_euler = (0.0, math.radians(-90), 0.0)
+    stripe.location = (0.0, 0.0, 0.92)
+    parts.append(stripe)
+    # dark rounded visor screen on the face (-Y)
+    add("cube", "Visor", (0.0, -0.27, 0.92), (0.21, 0.05, 0.155), mat_visor, subdiv=2)
+    # emissive green triangle eyes on the visor
     for side in (-1, 1):
-        ex = side * 0.042
-        ey = 0.093
-        ez = 1.71
-        add("sphere", f"EyeWhite{side:+d}", (ex, ey, ez), (0.020, 0.022, 0.020),
-            mat_eye_white, subdiv=0)
-        add("sphere", f"Iris{side:+d}", (ex, ey + 0.016, ez), (0.011, 0.004, 0.011),
-            mat_iris, subdiv=0)
-        add("sphere", f"Pupil{side:+d}", (ex, ey + 0.022, ez), (0.005, 0.003, 0.005),
-            mat_pupil, subdiv=0)
-    # brows
+        add_triangle_outline(parts, "Eye%+d" % side,
+                             (side * 0.105, -0.315, 0.93), 0.11, 0.012, mat_eye)
+    # ear pods + cream caps
     for side in (-1, 1):
-        add("cube", f"Brow{side:+d}", (side * 0.042, 0.100, 1.735),
-            (0.040, 0.010, 0.010), mat_hair, subdiv=0)
-    # mouth
-    add("cube", "Mouth", (0.0, 0.097, 1.655), (0.050, 0.012, 0.008), mat_mouth, subdiv=0)
+        add("cylinder", "EarPod%+d" % side, (side * 0.30, 0.0, 0.92),
+            (0.10, 0.10, 0.05), mat_dark, rotation=(0.0, math.radians(90), 0.0),
+            subdiv=1)
+        add("cylinder", "EarCap%+d" % side, (side * 0.335, 0.0, 0.92),
+            (0.06, 0.06, 0.02), mat_cream, rotation=(0.0, math.radians(90), 0.0),
+            subdiv=1)
+        # antenna nubs on the upper sides
+        add("cylinder", "Antenna%+d" % side, (side * 0.19, 0.0, 1.13),
+            (0.03, 0.03, 0.06), mat_cream,
+            rotation=(0.0, side * math.radians(25), 0.0), subdiv=1)
 
-    # ---- Hair (half-sphere cap on top of head) ----------------------------
-    hair = make_primitive("sphere", "HairCap", Vector((0.0, -0.01, 1.745)),
-                          Vector((0.100, 0.110, 0.085)), material=mat_hair, subdiv=3)
-    # keep only the top half: use a boolean-free approach — scale/flatten + clip
-    bpy.context.view_layer.objects.active = hair
-    bpy.ops.object.mode_set(mode="EDIT")
-    bpy.ops.mesh.select_all(action="DESELECT")
-    bpy.ops.object.mode_set(mode="OBJECT")
-    # Remove bottom half vertices (z < hair center) via bmesh
-    import bmesh
-    me = hair.data
-    bm = bmesh.new()
-    bm.from_mesh(me)
-    bmesh.ops.delete(bm, geom=[v for v in bm.verts if v.co.z < 0.0],
-                     context="VERTS")
-    bm.to_mesh(me)
-    bm.free()
-    bpy.ops.object.mode_set(mode="OBJECT")
-    parts.append(hair)
+    # ---- Torso -------------------------------------------------------------
+    add("cylinder", "Neck", (0.0, 0.0, 0.62), (0.05, 0.05, 0.07), mat_dark, subdiv=1)
+    add("sphere", "Chest", (0.0, 0.0, 0.50), (0.16, 0.12, 0.12), mat_red, subdiv=2)
+    # emissive chest emblem (small upright triangle)
+    add_triangle_outline(parts, "Emblem", (0.0, -0.115, 0.50), 0.06, 0.008,
+                         mat_emblem)
+    add("sphere", "Abdomen", (0.0, 0.0, 0.385), (0.11, 0.09, 0.08), mat_maroon,
+        subdiv=2)
+    add("sphere", "Pelvis", (0.0, 0.0, 0.285), (0.12, 0.10, 0.08), mat_maroon,
+        subdiv=2)
 
-    # ---- Arms (shoulder -> upper arm -> forearm -> hand) ------------------
+    # ---- Arms (pauldron -> upper arm -> elbow -> forearm -> hand) ----------
     for side, sx in (("L", -1), ("R", 1)):
-        add("sphere", f"Shoulder{side}", (sx * 0.16, 0.0, 1.44),
-            (0.065, 0.065, 0.065), mat_skin, subdiv=2)
-        add("cylinder", f"UpperArm{side}", (sx * 0.185, 0.0, 1.20),
-            (0.045, 0.045, 0.20), mat_skin, subdiv=2)
-        add("sphere", f"Elbow{side}", (sx * 0.185, 0.0, 0.99),
-            (0.045, 0.045, 0.045), mat_skin, subdiv=2)
-        add("cylinder", f"Forearm{side}", (sx * 0.185, 0.0, 0.82),
-            (0.038, 0.038, 0.17), mat_skin, subdiv=2)
-        add("sphere", f"Hand{side}", (sx * 0.185, 0.0, 0.68),
-            (0.032, 0.028, 0.040), mat_skin, subdiv=0)
+        x = sx * 0.185
+        add("sphere", f"Pauldron{side}", (sx * 0.17, 0.0, 0.55),
+            (0.08, 0.08, 0.08), mat_red, subdiv=2)
+        add("cylinder", f"UpperArm{side}", (x, 0.0, 0.48),
+            (0.045, 0.045, 0.09), mat_red, subdiv=2)
+        add("sphere", f"Elbow{side}", (x, 0.0, 0.415),
+            (0.042, 0.042, 0.042), mat_dark, subdiv=2)
+        add("cylinder", f"Forearm{side}", (x, 0.0, 0.35),
+            (0.040, 0.040, 0.08), mat_red, subdiv=2)
+        add("cylinder", f"Cuff{side}", (x, 0.0, 0.30),
+            (0.046, 0.046, 0.02), mat_cream, subdiv=1)
+        add("cube", f"Hand{side}", (x, 0.0, 0.25),
+            (0.035, 0.03, 0.045), mat_maroon, subdiv=1)
 
-    # ---- Legs (thigh -> shin -> foot) -------------------------------------
+    # ---- Legs (thigh -> knee -> shin -> boot) -------------------------------
     for side, sx in (("L", -1), ("R", 1)):
-        add("cylinder", f"Thigh{side}", (sx * 0.095, 0.0, 0.64),
-            (0.070, 0.070, 0.22), mat_skin, subdiv=2)
-        add("sphere", f"Knee{side}", (sx * 0.095, 0.0, 0.43),
-            (0.055, 0.055, 0.055), mat_skin, subdiv=2)
-        add("cylinder", f"Shin{side}", (sx * 0.095, 0.0, 0.22),
-            (0.048, 0.048, 0.22), mat_skin, subdiv=2)
-        add("cube", f"Foot{side}", (sx * 0.095, 0.055, 0.035),
-            (0.070, 0.16, 0.055), mat_shoes, subdiv=0)
-
-    # ---- Clothes ----------------------------------------------------------
-    # shirt (torso layer, slightly larger)
-    add("sphere", "ShirtTop", (0.0, 0.0, 1.22), (0.145, 0.115, 0.19), mat_shirt, subdiv=3)
-    add("sphere", "ShirtHip", (0.0, 0.0, 0.96), (0.125, 0.115, 0.10), mat_shirt, subdiv=3)
-    # sleeves
-    for side, sx in (("L", -1), ("R", 1)):
-        add("cylinder", f"Sleeve{side}", (sx * 0.185, 0.0, 1.20),
-            (0.050, 0.050, 0.14), mat_shirt, subdiv=2)
-    # pants (over thighs + shins, slightly larger)
-    for side, sx in (("L", -1), ("R", 1)):
-        add("cylinder", f"Pant{side}", (sx * 0.098, 0.0, 0.60),
-            (0.078, 0.078, 0.26), mat_pants, subdiv=2)
-        add("cylinder", f"PantShin{side}", (sx * 0.098, 0.0, 0.22),
-            (0.056, 0.056, 0.18), mat_pants, subdiv=2)
+        x = sx * 0.095
+        add("cylinder", f"Thigh{side}", (x, 0.0, 0.215),
+            (0.062, 0.062, 0.08), mat_red, subdiv=2)
+        add("sphere", f"Knee{side}", (x, 0.0, 0.15),
+            (0.05, 0.05, 0.05), mat_dark, subdiv=2)
+        add("cylinder", f"Shin{side}", (x, 0.0, 0.10),
+            (0.052, 0.052, 0.07), mat_red, subdiv=2)
+        add("cube", f"Boot{side}", (x, -0.02, 0.09),
+            (0.09, 0.12, 0.075), mat_red, subdiv=2)
+        # small cyan accent bars on the boot fronts (like the reference)
+        add("cylinder", f"BootAccent{side}", (sx * 0.16, -0.10, 0.10),
+            (0.014, 0.014, 0.05), mat_cyan, subdiv=1)
+        add("sphere", f"ToeCap{side}", (x, -0.13, 0.045),
+            (0.06, 0.05, 0.045), mat_cream, subdiv=2)
+        add("cube", f"Sole{side}", (x, -0.02, 0.012),
+            (0.085, 0.11, 0.012), mat_dark, subdiv=0)
 
     # ---- Join all parts into a single mesh ---------------------------------
+    bpy.ops.object.select_all(action="DESELECT")
     for obj in parts:
         obj.select_set(True)
     bpy.context.view_layer.objects.active = parts[0]
     bpy.ops.object.join()
     body = bpy.context.active_object
     body.name = "Humanoid_Body"
+    # Bake the inherited object transform so the mesh lives in world space
+    # with unit scale (a non-uniform object scale would distort armature
+    # deformation when the twin is posed).
+    bpy.ops.object.select_all(action="DESELECT")
+    body.select_set(True)
+    bpy.context.view_layer.objects.active = body
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     return body
 
 
 # ---------------------------------------------------------------------------
-# Armature + auto-weight parenting
+# Armature + auto-weight parenting (same bone names as twin control chain)
 # ---------------------------------------------------------------------------
 def add_armature(body):
     arm_data = bpy.data.armatures.new("HumanoidRig")
@@ -241,73 +304,73 @@ def add_armature(body):
     eb = arm_data.edit_bones
 
     root = eb.new("root")
-    root.head = (0.0, 0.0, 0.05)
-    root.tail = (0.0, 0.0, 0.10)
+    root.head = (0.0, 0.0, 0.02)
+    root.tail = (0.0, 0.0, 0.06)
 
     spine = eb.new("spine")
-    spine.head = (0.0, 0.0, 0.85)
-    spine.tail = (0.0, 0.0, 1.20)
+    spine.head = (0.0, 0.0, 0.26)
+    spine.tail = (0.0, 0.0, 0.42)
     spine.parent = root
 
     chest = eb.new("chest")
-    chest.head = (0.0, 0.0, 1.20)
-    chest.tail = (0.0, 0.0, 1.45)
+    chest.head = (0.0, 0.0, 0.42)
+    chest.tail = (0.0, 0.0, 0.60)
     chest.parent = spine
 
     neck = eb.new("neck")
-    neck.head = (0.0, 0.0, 1.45)
-    neck.tail = (0.0, 0.0, 1.56)
+    neck.head = (0.0, 0.0, 0.60)
+    neck.tail = (0.0, 0.0, 0.66)
     neck.parent = chest
 
     head = eb.new("head")
-    head.head = (0.0, 0.0, 1.56)
-    head.tail = (0.0, 0.0, 1.72)
+    head.head = (0.0, 0.0, 0.66)
+    head.tail = (0.0, 0.0, 1.05)
     head.parent = neck
 
     for side, sx in (("L", -1), ("R", 1)):
         shoulder = eb.new(f"shoulder.{side}")
-        shoulder.head = (sx * 0.05, 0.0, 1.42)
-        shoulder.tail = (sx * 0.20, 0.0, 1.42)
+        shoulder.head = (sx * 0.04, 0.0, 0.55)
+        shoulder.tail = (sx * 0.16, 0.0, 0.55)
         shoulder.parent = chest
 
         uarm = eb.new(f"upper_arm.{side}")
-        uarm.head = (sx * 0.20, 0.0, 1.42)
-        uarm.tail = (sx * 0.20, 0.0, 1.00)
+        uarm.head = (sx * 0.185, 0.0, 0.55)
+        uarm.tail = (sx * 0.185, 0.0, 0.415)
         uarm.parent = shoulder
 
         farm = eb.new(f"forearm.{side}")
-        farm.head = (sx * 0.20, 0.0, 1.00)
-        farm.tail = (sx * 0.20, 0.0, 0.75)
+        farm.head = (sx * 0.185, 0.0, 0.415)
+        farm.tail = (sx * 0.185, 0.0, 0.30)
         farm.parent = uarm
 
         hand = eb.new(f"hand.{side}")
-        hand.head = (sx * 0.20, 0.0, 0.75)
-        hand.tail = (sx * 0.20, 0.0, 0.66)
+        hand.head = (sx * 0.185, 0.0, 0.30)
+        hand.tail = (sx * 0.185, 0.0, 0.23)
         hand.parent = farm
 
         thigh = eb.new(f"thigh.{side}")
-        thigh.head = (sx * 0.10, 0.0, 0.85)
-        thigh.tail = (sx * 0.10, 0.0, 0.45)
+        thigh.head = (sx * 0.095, 0.0, 0.28)
+        thigh.tail = (sx * 0.095, 0.0, 0.15)
         thigh.parent = root
 
         shin = eb.new(f"shin.{side}")
-        shin.head = (sx * 0.10, 0.0, 0.45)
-        shin.tail = (sx * 0.10, 0.0, 0.08)
+        shin.head = (sx * 0.095, 0.0, 0.15)
+        shin.tail = (sx * 0.095, 0.0, 0.05)
         shin.parent = thigh
 
         foot = eb.new(f"foot.{side}")
-        foot.head = (sx * 0.10, 0.0, 0.08)
-        foot.tail = (sx * 0.10, 0.12, 0.03)
+        foot.head = (sx * 0.095, 0.0, 0.05)
+        foot.tail = (sx * 0.095, -0.10, 0.02)
         foot.parent = shin
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
     # Parent mesh to armature with automatic weights
+    bpy.ops.object.select_all(action="DESELECT")
     body.select_set(True)
+    arm.select_set(True)
     bpy.context.view_layer.objects.active = arm
     bpy.ops.object.parent_set(type="ARMATURE_AUTO")
-    # Fallback: ensure every bone has a vertex group with non-zero weights
-    fix_weights(arm, body)
     # Fallback: ensure every bone has a vertex group with non-zero weights
     fix_weights(arm, body)
     return arm
@@ -326,7 +389,7 @@ def fix_weights(arm_obj, body):
 
     mesh = body.data
     vgs = body.vertex_groups
-    sigma = 0.055
+    sigma = 0.045
 
     for bone in arm_obj.data.bones:
         name = bone.name
@@ -373,30 +436,40 @@ def setup_scene_and_render():
     scene.render.engine = "BLENDER_EEVEE"
     scene.render.resolution_x = 1280
     scene.render.resolution_y = 1280
+    # Saturated toy look (AgX would wash out the neon eyes)
+    scene.view_settings.view_transform = "Standard"
+
+    # Warm orange studio backdrop like the reference image
+    world = bpy.data.worlds.get("World") or bpy.data.worlds.new("World")
+    scene.world = world
+    world.use_nodes = True
+    bg = world.node_tree.nodes.get("Background")
+    bg.inputs["Color"].default_value = (0.85, 0.35, 0.05, 1.0)
+    bg.inputs["Strength"].default_value = 1.0
 
     # Ground / subtle backdrop
     ground = make_primitive("cube", "Ground", (0.0, 0.0, -0.01),
                             (3.0, 3.0, 0.02), material=None, subdiv=0)
-    gmat = make_material("Ground", (0.22, 0.24, 0.27), roughness=0.9)
+    gmat = make_material("Ground", (0.45, 0.16, 0.02), roughness=0.8)
     ground.data.materials.append(gmat)
 
     # Lights
     key = bpy.data.objects.new("KeyLight", bpy.data.lights.new("KeyLight", "AREA"))
-    key.location = (2.4, -2.2, 3.2)
+    key.location = (1.8, -1.6, 2.4)
     key.rotation_euler = (math.radians(45), 0, math.radians(40))
-    key.data.energy = 300
+    key.data.energy = 200
     scene.collection.objects.link(key)
 
     fill = bpy.data.objects.new("FillLight", bpy.data.lights.new("FillLight", "AREA"))
-    fill.location = (-2.2, -1.4, 1.6)
+    fill.location = (-1.6, -1.2, 1.2)
     fill.rotation_euler = (math.radians(20), 0, math.radians(-60))
-    fill.data.energy = 120
+    fill.data.energy = 100
     scene.collection.objects.link(fill)
 
     rim = bpy.data.objects.new("RimLight", bpy.data.lights.new("RimLight", "AREA"))
-    rim.location = (0.0, 3.0, 2.0)
+    rim.location = (0.0, 2.2, 1.6)
     rim.rotation_euler = (math.radians(30), 0, math.radians(180))
-    rim.data.energy = 80
+    rim.data.energy = 70
     scene.collection.objects.link(rim)
 
     cam = bpy.data.objects.new("Camera", bpy.data.cameras.new("Camera"))
@@ -405,7 +478,7 @@ def setup_scene_and_render():
 
     # Track-to target
     empty = bpy.data.objects.new("Target", None)
-    empty.location = (0.0, 0.0, 0.95)
+    empty.location = (0.0, 0.0, 0.60)
     scene.collection.objects.link(empty)
     track = cam.constraints.new("TRACK_TO")
     track.target = empty
@@ -418,8 +491,8 @@ def setup_scene_and_render():
         bpy.ops.render.render(write_still=True)
         print(f"RENDERED {name}: {out_path}")
 
-    render_angle("front", (0.0, -3.6, 1.05), RENDER_FRONT)
-    render_angle("3quarter", (2.4, -2.7, 1.35), RENDER_THREEQUARTER)
+    render_angle("front", (0.0, -2.3, 0.62), RENDER_FRONT)
+    render_angle("3quarter", (1.65, -1.65, 0.95), RENDER_THREEQUARTER)
 
 
 # ---------------------------------------------------------------------------
