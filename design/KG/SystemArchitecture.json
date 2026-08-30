@@ -109,6 +109,11 @@
           "name": "commit",
           "value": "646ede1",
           "description": "regenerated 9 action evidence stills with fixed wave (anatomical right arm), look (horizontal yaw), nod (deeper pitch); same unified front camera"
+        },
+        {
+          "name": "commit",
+          "value": "c3daae7",
+          "description": "regenerated humanoid.blend with 9 baked joint-rotation Actions + refreshed previews and action evidence stills; files: assets/humanoid/humanoid.blend, assets/humanoid/preview_*.png, assets/humanoid/action_*.png"
         }
       ],
       "testcases": [
@@ -159,15 +164,25 @@
         {
           "name": "file_paths",
           "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py"
+        },
+        {
+          "name": "commit",
+          "value": "d306076",
+          "description": "bake step in build pipeline (bake_actions + preview detach/reattach); file: scripts/blender_humanoid/build_humanoid.py"
+        },
+        {
+          "name": "commit",
+          "value": "64eefa6",
+          "description": "build reproducibility test extended: regenerated blend must ship 9 joint-only Actions; file: tests/acceptance/test_humanoid_build.py"
         }
       ],
       "testcases": [
         {
-          "name": "humanoid-build-reproducible",
-          "type": "Acceptance Test",
-          "description": "GIVEN 仓库含 scripts/blender_humanoid/build_humanoid.py WHEN 以 ABOT_HUMANOID_OUT_DIR 指向临时目录无头运行构建 THEN 退出码 0 且在该目录再生 humanoid.blend 与两张 1280x1280 预览 PNG（不触碰已提交产物，证明脚本可复现）。",
           "Input": "scripts/blender_humanoid/build_humanoid.py",
-          "acceptanceCriteria": "tests/acceptance/test_humanoid_build.py"
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_build.py",
+          "description": "GIVEN 仓库含 scripts/blender_humanoid/build_humanoid.py WHEN 以 ABOT_HUMANOID_OUT_DIR 指向临时目录无头运行构建 THEN 退出码 0 且在该目录再生 humanoid.blend 与两张 1280x1280 预览 PNG（不触碰已提交产物，证明脚本可复现），且再生的 blend 含 9 个烘焙 Action（ActionRelax/ActionTPose/ActionAPose/ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun）、F-curve 全部 joint-only（骨骼 rotation_euler / FK root location）、默认 Action 已绑定 armature（GUI 即播）。",
+          "name": "humanoid-build-reproducible",
+          "type": "Acceptance Test"
         }
       ]
     },
@@ -217,15 +232,25 @@
         {
           "name": "file_paths",
           "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py"
+        },
+        {
+          "name": "commit",
+          "value": "d306076",
+          "description": "bake 9 key actions into named bone-rotation Actions; humanoid_control ACTION_SPECS/MOTION_DRIVERS contract + load_humanoid detaches active Action; files: scripts/blender_humanoid/build_humanoid.py, scripts/blender_humanoid/humanoid_control.py"
+        },
+        {
+          "name": "commit",
+          "value": "64eefa6",
+          "description": "baked-Action playback contract in test_humanoid_actions.py (Part B, no-driver frame evaluation); files: tests/acceptance/test_humanoid_actions.py, tests/acceptance/test_humanoid_build.py"
         }
       ],
       "testcases": [
         {
-          "name": "twin-control-key-actions-contract",
-          "type": "Acceptance Test",
-          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点） THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 解剖学右臂（rig 的 '.L' 骨链，world -X，前相机下屏幕左；机器人面朝 -Y，'.R' 链=解剖学左）外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad（幅度已加深至 0.45rad）；look 头水平 yaw（head 骨 local Y = 世界竖直轴）≥0.45rad 且面内 roll 保持小；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG。",
           "Input": "assets/humanoid/humanoid.blend + assets/humanoid/action_*.png + scripts/blender_humanoid/humanoid_control.py",
-          "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py"
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py",
+          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点），并另在无 Python 驱动下重新打开 humanoid.blend 逐帧求值烘焙的命名 Action THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 解剖学右臂（rig 的 '.L' 骨链，world -X，前相机下屏幕左；机器人面朝 -Y，'.R' 链=解剖学左）外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad（幅度已加深至 0.45rad）；look 头水平 yaw（head 骨 local Y = 世界竖直轴）≥0.45rad 且面内 roll 保持小；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG；且 blend 内置 ActionRelax/ActionTPose/ActionAPose/ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun，F-curve 为 joint-only（骨骼 rotation_euler + walk/run 的 FK root location），加载时已有 Action 绑定于 armature，无驱动逐帧求值复现同一批签名（即加载后按播放可见关节运动）。",
+          "name": "twin-control-key-actions-contract",
+          "type": "Acceptance Test"
         }
       ]
     },
@@ -513,7 +538,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-08-30，动作轴向修正轮）：目标=修正视觉分析员指出的 wave 举臂侧别（改解剖学右臂）与 look 轴向（roll→yaw）+ nod 俯角加深。完成：humanoid_control.py apply_wave 改驱 '.L' 链、apply_look 改 local Y yaw 0.55rad、apply_nod 0.22→0.45rad；test_humanoid_actions.py 断言按新正确行为更新；重渲 9 张证据图（同前相机）；多模态目检 wave/look/nod 全达标；5 验收测试 + validateSystemArchitecture 通过；commit 646ede1 登记于 twin-control-001/humanoid-build-001/humanoid-model-001 并写入 view-rm-memory-001。关键决策：不改骨名（保 FK 契约与 twin-control 链路），左右约定以 docstring 文档化（'.L' 链=解剖学右，world -X=屏幕左）。遗留：无阻断项。经验：rig 命名与解剖学相反是长期陷阱；head 骨 X=pitch/Y=yaw/Z=roll。",
+      "description": "会话总结（2026-08-30，烘焙 Actions 轮）：目标=修复 Blender GUI 加载 humanoid.blend 按播放看不到动作的问题（把 9 关键动作烘焙为 .blend 内命名关节旋转 Action）。完成：build_humanoid.py 新增 bake_actions（ActionRelax..ActionRun，纯骨骼 rotation 关键帧 + walk/run root 起伏，时长取动作周期整数倍保证无缝循环，ActionIdle 默认绑定、GUI 即播）；humanoid_control 新增 ACTION_SPECS/MOTION_DRIVERS 契约并在 load_humanoid 解绑活动 Action 以保护运行时 FK 驱动链；再生 blend + 重渲 9 证据图（ACTION_FACTS 与上轮一致）；test_humanoid_actions.py 新增 Part B（无驱动打开即播、逐帧断言关节随时间变化且符合契约），test_humanoid_build.py 扩展为含 9 个 joint-only Action 断言；5 测试 + validateSystemArchitecture 全过。commit：d306076（脚本）/ c3daae7（blend+证据）/ 64eefa6（测试），已登记于 twin-control-001/humanoid-build-001/humanoid-model-001。关键决策：烘焙复用 humanoid_control 驱动参数（同一套 FK 契约、单一事实源）；不用 NLA strips 而用 fake_user + ActionIdle 默认绑定（Action Editor 下拉切换最简）。遗留：无阻断项。经验：Blender 5.1 slotted Action 须 channelbag 访问 F-curve；预览渲染前须解绑 Action 才得中性姿势；Blender 状态输出会粘在 JSON 行后用 raw_decode。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -566,6 +591,33 @@
           "description": "Session record registered into overseer LTM; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "description": "会话记录（2026-08-30，机器人3D建模员）：修复「Blender GUI 加载新 humanoid.blend 按播放看不到动作」——根因：9 个动作是 humanoid_control.py 运行时 Python 逐帧驱动，未烘焙进 .blend。交付：①build_humanoid.py 新增 bake_actions：把 9 关键动作烘焙为命名 Action（ActionRelax/ActionTPose/ActionAPose/ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun），纯骨骼 rotation_euler 关键帧（walk/run 另含 FK root location 起伏，无顶点/形变动画），从 humanoid_control 驱动器按 FPS=30 逐帧采样、时长取动作分量周期整数倍（walk πs / run 2π/3 s / idle 一呼吸周期 / wave 公共周期 2π 等）保证循环无缝；先采样判定实际运动的骨骼只对其打关键帧；烘焙时强制 joint-only 断言；use_fake_user 防丢失；ActionIdle 默认绑定、GUI 加载即播。②humanoid_control 新增 ACTION_SPECS/MOTION_DRIVERS 烘焙契约（单一事实源）；load_humanoid() 打开后解绑活动 Action——否则 depsgraph 求值会用烘焙关键帧覆盖 Python 驱动的关节旋转、破坏 twin_server/证据渲染等运行时链路（保运行时驱动链的关键）。③验收：test_humanoid_actions.py Part B 无驱动重开 blend 逐帧求值烘焙 Action、断言关节 rotation 随时间变化且方向/幅度符合契约（walk 大腿反相、wave 右臂外展+手摆、look 头 yaw、nod 俯仰、run 前倾）；test_humanoid_build.py 断言再生 blend 含 9 个 joint-only Action。回归：5 验收测试全过 + validateSystemArchitecture 过；重渲 9 动作证据图（ACTION_FACTS 与上轮一致，运行时链未破坏）。坑：①Blender 5.1 slotted Action 无 action.fcurves 属性，须 action.layers/strips/channelbag(slot).fcurves 访问；②Blender 状态输出（Read blend:）可能无换行粘在打印 JSON 行后，解析须 JSONDecoder.raw_decode；③静态姿势函数签名 (arm) 而时间动作 (arm,t)，MOTION_DRIVERS 用 lambda 统一 (arm,t)；④run 前倾是均值 0.209±0.06 振荡，'恒≥0.2' 断言应改为均值/峰值。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "description": "bake scripts (build_humanoid.py + humanoid_control.py)",
+          "name": "commit",
+          "value": "d306076"
+        },
+        {
+          "description": "regenerated humanoid.blend with baked Actions + evidence",
+          "name": "commit",
+          "value": "c3daae7"
+        },
+        {
+          "description": "baked-Action playback acceptance tests",
+          "name": "commit",
+          "value": "64eefa6"
+        }
+      ],
+      "id": "rm-mem-20260830-baked-actions",
+      "name": "建模记忆 2026-08-30 (baked joint-rotation Actions for GUI playback)",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -682,7 +734,8 @@
         "rm-mem-20260830-chibi-restyle",
         "rm-mem-20260830-gapfixes-round2",
         "rm-mem-20260830-action-evidence",
-        "rm-mem-20260830-action-axis-fix"
+        "rm-mem-20260830-action-axis-fix",
+        "rm-mem-20260830-baked-actions"
       ],
       "included_relationships": []
     },
