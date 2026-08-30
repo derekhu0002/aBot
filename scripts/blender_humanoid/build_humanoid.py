@@ -17,12 +17,26 @@ Design decisions
 - Metallic / emissive Principled materials: robot red, maroon, cream trim,
   dark joints, near-black visor, emissive green eyes, emissive emblem, cyan
   accents. View transform 'Standard' for the saturated toy look.
-- The same FK armature layout (root -> spine -> chest -> neck -> head, plus
-  L/R shoulder/upper_arm/forearm/hand/thigh/shin/foot) is kept so the twin
-  control chain (humanoid_control.py / twin_server.py) keeps working; the
-  joined mesh is parented with automatic weights + distance-falloff fallback.
-- Output paths can be redirected with ABOT_HUMANOID_OUT_DIR (used by the
-  reproducibility acceptance test); default is assets/humanoid.
+ - The same FK armature layout (root -> spine -> chest -> neck -> head, plus
+   L/R shoulder/upper_arm/forearm/hand/thigh/shin/foot) is kept so the twin
+   control chain (humanoid_control.py / twin_server.py) keeps working; the
+   joined mesh is parented with automatic weights + distance-falloff fallback.
+ - Output paths can be redirected with ABOT_HUMANOID_OUT_DIR (used by the
+   reproducibility acceptance test); default is assets/humanoid.
+
+ Round-2 fixes after the visual analyst's gap list (2026-08-30):
+ - Hands: rounded palm + three fingers + thumb per side (no polyhedral block).
+ - Feet: the dark gray sole plates are gone; boots get a rounded gold sole,
+   a cream collar and a cyan cable loop on the outer side (replaces the
+   cyan spike accents).
+ - Visor: curved rounded-rect screen built as a spherical shell (boolean
+   intersect of a slightly larger sphere with a beveled prism) so it follows
+   the helmet curvature, plus a gold/cream rim shell behind it, a procedural
+   scanline (wave->ramp->bump+color) in the visor material, and emissive
+   triangle eyes rebuilt as curved shell outlines hugging the visor (no
+   floating in side view).
+ - Hard-surface detail: helmet rivets, two horizontal panel-line seams, a
+   cream waist belt (mechanical trim density closer to the reference).
 
 Run headless:
     blender -b -P scripts/blender_humanoid/build_humanoid.py
@@ -136,6 +150,123 @@ def delete_verts_below(obj, axis="x", value=0.0):
     bm.free()
 
 
+def apply_modifier(obj, mod):
+    """Apply one modifier on obj (headless-safe)."""
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.modifier_apply(modifier=mod.name)
+
+
+def boolean_apply(obj, cutter, operation):
+    """Apply a boolean `operation` with `cutter`, then delete the cutter."""
+    mod = obj.modifiers.new("Bool", "BOOLEAN")
+    mod.operation = operation
+    mod.solver = "EXACT"
+    mod.object = cutter
+    apply_modifier(obj, mod)
+    bpy.data.objects.remove(cutter, do_unlink=True)
+
+
+def make_rounded_prism(name, half_x, half_z, half_y, bevel):
+    """Rounded-rectangle prism, long axis Y (used as boolean cutter)."""
+    bpy.ops.mesh.primitive_cube_add(size=2.0, location=(0.0, 0.0, 0.0))
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = (half_x, half_y, half_z)
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    b = obj.modifiers.new("Bevel", "BEVEL")
+    b.width = bevel
+    b.segments = 6
+    apply_modifier(obj, b)
+    return obj
+
+
+def make_tri_ring_prism(name, side, thickness, depth):
+    """Triangular outline prism (upright triangle), long axis Y.
+
+    Built from two 3-vert cones (outer minus inner) so a boolean intersect
+    with a sphere yields a curved triangle outline.
+    """
+    from mathutils import Matrix
+
+    def cone(r):
+        bpy.ops.mesh.primitive_cone_add(radius1=r, radius2=r, depth=depth,
+                                        vertices=3, location=(0.0, 0.0, 0.0))
+        return bpy.context.active_object
+
+    outer = cone(side / math.sqrt(3.0))
+    inner = cone(max((side - 2.2 * thickness) / math.sqrt(3.0), 0.01))
+    # orient: apex of the triangle to +Y, then prism axis Z -> -Y so the
+    # triangle stands upright in X-Z facing -Y
+    v0 = outer.data.vertices[0].co
+    theta0 = math.atan2(v0.y, v0.x)
+    orient = Matrix.Rotation(math.radians(90), 4, "X") @ \
+        Matrix.Rotation(math.radians(90) - theta0, 4, "Z")
+    outer.matrix_world = orient
+    inner.matrix_world = orient
+    boolean_apply(outer, inner, "DIFFERENCE")
+    outer.name = name
+    return outer
+
+
+def make_shell(name, radii, center, cutter, material, cutter_offset,
+               segments=96):
+    """Spherical shell patch = sphere(radii at `center`) INTERSECT cutter.
+
+    The cutter is placed at `center` + `cutter_offset`.  Result hugs the
+    sphere surface, i.e. follows the head curvature when radii ~ helmet
+    radii + small offset.  The object keeps `center` as its location so the
+    later join bakes it into the right world position.
+    """
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1.0, segments=segments,
+                                         ring_count=segments // 2,
+                                         location=center)
+    obj = bpy.context.active_object
+    obj.name = name
+    obj.scale = radii
+    bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+    cutter.location = (center[0] + cutter_offset[0],
+                       center[1] + cutter_offset[1],
+                       center[2] + cutter_offset[2])
+    boolean_apply(obj, cutter, "INTERSECT")
+    if material is not None:
+        # boolean leaves a leftover empty slot; force a single clean slot so
+        # every face actually uses the intended material
+        obj.data.materials.clear()
+        obj.data.materials.append(material)
+        for poly in obj.data.polygons:
+            poly.material_index = 0
+    bpy.ops.object.shade_smooth()
+    return obj
+
+
+def add_scanlines(mat):
+    """Procedural horizontal scanlines on a visor material (bump + tint)."""
+    nt = mat.node_tree
+    bsdf = nt.nodes.get("Principled BSDF")
+    tex = nt.nodes.new("ShaderNodeTexCoord")
+    mapping = nt.nodes.new("ShaderNodeMapping")
+    mapping.inputs["Rotation"].default_value[1] = math.radians(90)
+    wave = nt.nodes.new("ShaderNodeTexWave")
+    wave.wave_type = "BANDS"
+    wave.inputs["Scale"].default_value = 250.0
+    ramp = nt.nodes.new("ShaderNodeValToRGB")
+    ramp.color_ramp.elements[0].position = 0.45
+    ramp.color_ramp.elements[1].position = 0.55
+    mix = nt.nodes.new("ShaderNodeMixRGB")
+    mix.inputs["Color1"].default_value = (0.010, 0.010, 0.012, 1.0)
+    mix.inputs["Color2"].default_value = (0.030, 0.030, 0.034, 1.0)
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.15
+    lk = nt.links
+    lk.new(tex.outputs["Object"], mapping.inputs["Vector"])
+    lk.new(mapping.outputs["Vector"], wave.inputs["Vector"])
+    lk.new(wave.outputs["Fac"], ramp.inputs["Fac"])
+    lk.new(ramp.outputs["Color"], mix.inputs["Fac"])
+    lk.new(mix.outputs["Color"], bsdf.inputs["Base Color"])
+    lk.new(ramp.outputs["Color"], bump.inputs["Height"])
+    lk.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+
+
 def add_triangle_outline(parts, kind_name, center, side, thickness, material):
     """Add three thin cylinders forming an upright triangle outline.
 
@@ -186,6 +317,7 @@ def build_humanoid():
     mat_cream = make_material("CreamTrim", CREAM, roughness=0.30, metallic=0.70)
     mat_dark = make_material("DarkJoint", DARK_JOINT, roughness=0.50, metallic=0.60)
     mat_visor = make_material("Visor", VISOR, roughness=0.15, metallic=0.10)
+    add_scanlines(mat_visor)
     mat_eye = make_material("EyeGlow", EYE_GREEN, roughness=0.30,
                             emission=(0.0, 1.0, 0.05), emission_strength=4.0)
     mat_emblem = make_material("EmblemGlow", EMBLEM, roughness=0.30,
@@ -208,12 +340,21 @@ def build_humanoid():
     stripe.rotation_euler = (0.0, math.radians(-90), 0.0)
     stripe.location = (0.0, 0.0, 0.92)
     parts.append(stripe)
-    # dark rounded visor screen on the face (-Y)
-    add("cube", "Visor", (0.0, -0.27, 0.92), (0.21, 0.05, 0.155), mat_visor, subdiv=2)
-    # emissive green triangle eyes on the visor
+    # curved rounded-rect visor screen hugging the helmet (spherical shell)
+    HC = (0.0, 0.0, 0.92)
+    visor_cut = make_rounded_prism("VisorCut", 0.19, 0.145, 0.5, 0.05)
+    parts.append(make_shell("Visor", (0.312, 0.312, 0.292), HC,
+                            visor_cut, mat_visor, (0.0, -0.5, 0.0)))
+    # gold/cream rim shell behind the visor border
+    rim_cut = make_rounded_prism("RimCut", 0.215, 0.165, 0.5, 0.05)
+    parts.append(make_shell("VisorRim", (0.306, 0.306, 0.286), HC,
+                            rim_cut, mat_cream, (0.0, -0.5, 0.0)))
+    # emissive green triangle eyes as curved outlines hugging the visor
     for side in (-1, 1):
-        add_triangle_outline(parts, "Eye%+d" % side,
-                             (side * 0.105, -0.315, 0.93), 0.11, 0.012, mat_eye)
+        eye_cut = make_tri_ring_prism("EyeCut%+d" % side, 0.11, 0.014, 0.6)
+        parts.append(make_shell("Eye%+d" % side, (0.317, 0.317, 0.297), HC,
+                                eye_cut, mat_eye,
+                                (side * 0.105, -0.25, 0.01)))
     # ear pods + cream caps
     for side in (-1, 1):
         add("cylinder", "EarPod%+d" % side, (side * 0.30, 0.0, 0.92),
@@ -227,6 +368,25 @@ def build_humanoid():
             (0.03, 0.03, 0.06), mat_cream,
             rotation=(0.0, side * math.radians(25), 0.0), subdiv=1)
 
+    # ---- Hard-surface detail: rivets + panel seams -------------------------
+    def helmet_pt(dx, dy, dz, lift=0.0):
+        d = Vector((dx, dy, dz)).normalized()
+        return (d.x * (0.30 + lift), d.y * (0.30 + lift),
+                0.92 + d.z * (0.28 + lift))
+
+    for i, dirv in enumerate(((0.62, -0.72, 0.30), (-0.62, -0.72, 0.30),
+                              (0.62, -0.72, -0.30), (-0.62, -0.72, -0.30))):
+        add("sphere", "Rivet%d" % i, helmet_pt(*dirv, lift=-0.004),
+            (0.011, 0.011, 0.011), mat_dark, subdiv=1)
+    for i, dirv in enumerate(((0.30, -0.85, 0.45), (-0.30, -0.85, 0.45))):
+        add("sphere", "Bolt%d" % i, helmet_pt(*dirv, lift=-0.004),
+            (0.012, 0.012, 0.012), mat_cream, subdiv=1)
+    for j, zz in enumerate((1.06, 0.78)):
+        rr = 0.30 * math.sqrt(max(1.0 - ((zz - 0.92) / 0.28) ** 2, 0.05))
+        seam = make_torus("Seam%d" % j, rr, 0.0035, mat_maroon)
+        seam.location = (0.0, 0.0, zz)
+        parts.append(seam)
+
     # ---- Torso -------------------------------------------------------------
     add("cylinder", "Neck", (0.0, 0.0, 0.62), (0.05, 0.05, 0.07), mat_dark, subdiv=1)
     add("sphere", "Chest", (0.0, 0.0, 0.50), (0.16, 0.12, 0.12), mat_red, subdiv=2)
@@ -235,6 +395,9 @@ def build_humanoid():
                          mat_emblem)
     add("sphere", "Abdomen", (0.0, 0.0, 0.385), (0.11, 0.09, 0.08), mat_maroon,
         subdiv=2)
+    belt = make_torus("Belt", 0.105, 0.008, mat_cream)
+    belt.location = (0.0, 0.0, 0.385)
+    parts.append(belt)
     add("sphere", "Pelvis", (0.0, 0.0, 0.285), (0.12, 0.10, 0.08), mat_maroon,
         subdiv=2)
 
@@ -251,8 +414,16 @@ def build_humanoid():
             (0.040, 0.040, 0.08), mat_red, subdiv=2)
         add("cylinder", f"Cuff{side}", (x, 0.0, 0.30),
             (0.046, 0.046, 0.02), mat_cream, subdiv=1)
-        add("cube", f"Hand{side}", (x, 0.0, 0.25),
-            (0.035, 0.03, 0.045), mat_maroon, subdiv=1)
+        # rounded palm + mechanical fingers (no polyhedral block)
+        add("sphere", f"Palm{side}", (x, -0.005, 0.245),
+            (0.030, 0.026, 0.034), mat_maroon, subdiv=1)
+        for fi, dx in enumerate((-0.016, 0.0, 0.016)):
+            add("cylinder", f"Finger{side}{fi}", (x + dx, -0.012, 0.205),
+                (0.008, 0.008, 0.022), mat_red,
+                rotation=(math.radians(12), 0.0, 0.0), subdiv=1)
+        add("cylinder", f"Thumb{side}", (x - sx * 0.030, -0.012, 0.235),
+            (0.008, 0.008, 0.018), mat_red,
+            rotation=(math.radians(15), 0.0, sx * math.radians(35)), subdiv=1)
 
     # ---- Legs (thigh -> knee -> shin -> boot) -------------------------------
     for side, sx in (("L", -1), ("R", 1)):
@@ -265,13 +436,19 @@ def build_humanoid():
             (0.052, 0.052, 0.07), mat_red, subdiv=2)
         add("cube", f"Boot{side}", (x, -0.02, 0.09),
             (0.09, 0.12, 0.075), mat_red, subdiv=2)
-        # small cyan accent bars on the boot fronts (like the reference)
-        add("cylinder", f"BootAccent{side}", (sx * 0.16, -0.10, 0.10),
-            (0.014, 0.014, 0.05), mat_cyan, subdiv=1)
         add("sphere", f"ToeCap{side}", (x, -0.13, 0.045),
             (0.06, 0.05, 0.045), mat_cream, subdiv=2)
-        add("cube", f"Sole{side}", (x, -0.02, 0.012),
-            (0.085, 0.11, 0.012), mat_dark, subdiv=0)
+        # rounded gold sole puck (replaces the gray flat plate)
+        add("sphere", f"Sole{side}", (x, -0.045, 0.026),
+            (0.078, 0.125, 0.028), mat_cream, subdiv=1)
+        # cream boot collar + cyan cable loop on the outer side
+        collar = make_torus(f"BootCollar{side}", 0.056, 0.010, mat_cream)
+        collar.location = (x, 0.0, 0.155)
+        parts.append(collar)
+        cable = make_torus(f"BootCable{side}", 0.035, 0.006, mat_cyan)
+        cable.rotation_euler = (0.0, math.radians(90), 0.0)
+        cable.location = (sx * 0.16, -0.02, 0.09)
+        parts.append(cable)
 
     # ---- Join all parts into a single mesh ---------------------------------
     bpy.ops.object.select_all(action="DESELECT")
@@ -493,6 +670,14 @@ def setup_scene_and_render():
 
     render_angle("front", (0.0, -2.3, 0.62), RENDER_FRONT)
     render_angle("3quarter", (1.65, -1.65, 0.95), RENDER_THREEQUARTER)
+
+    # closeups for the visual analyst (visor + hand)
+    empty.location = (0.0, -0.28, 0.92)
+    render_angle("closeup_visor", (0.45, -0.85, 1.05),
+                 os.path.join(OUT_DIR, "preview_closeup_visor.png"))
+    empty.location = (0.185, -0.01, 0.24)
+    render_angle("closeup_hand", (0.55, -0.55, 0.35),
+                 os.path.join(OUT_DIR, "preview_closeup_hand.png"))
 
 
 # ---------------------------------------------------------------------------

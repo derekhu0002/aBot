@@ -13,6 +13,17 @@ THEN the model is the chibi robot restyled after assets/humanoid/reference_targe
     emissive green eyes, warm cream/gold trim;
   - chibi proportions: vertices dominated by the 'head' bone span >= 30% of
     total body height (the old human-proportioned model scored ~13%);
+  - visual-analyst gap fixes (2026-08-30 round 2), externally measured:
+    * no dark gray sole plate under the feet (no DarkJoint verts at z<0.025);
+    * hands are rounded with fingers (hand-region vert count well above the
+      old polyhedral block);
+    * visor is a curved shell hugging the helmet (every front-face Visor vert
+      sits at a near-constant ellipsoid radius ratio, old flat box scored r
+      up to 1.34) and carries a procedural scanline (wave) node;
+    * emissive eyes hug the visor (eye ellipsoid radius ratio <= 1.10, old
+      floating triangles scored ~1.15);
+    * gold/cream rim present at the visor front sides (cream verts at the
+      face border, absent in the old model);
   - both previews are valid 1280x1280 PNGs.
 """
 
@@ -45,7 +56,9 @@ bpy.ops.wm.open_mainfile(filepath=blend_path)
 arm = bpy.data.objects.get("HumanoidRig")
 body = bpy.data.objects.get("Humanoid_Body")
 facts = {"bones": [], "has_body": body is not None, "modifiers": [],
-         "vgroups": [], "materials": [], "head_share": 0.0, "height": 0.0}
+         "vgroups": [], "materials": [], "head_share": 0.0, "height": 0.0,
+         "visor_r": [0.0, 0.0], "eye_r_max": 0.0, "dark_low_count": 0,
+         "hand_low_count": 0, "cream_front_count": 0, "visor_wave": False}
 if arm is not None:
     facts["bones"] = sorted(b.name for b in arm.data.bones)
 if body is not None:
@@ -67,6 +80,43 @@ if body is not None:
             "emis_strength": round(bsdf.inputs["Emission Strength"].default_value, 3),
             "emis": [round(c, 3) for c in emis],
         })
+    # per-material vertex stats (external geometry evidence of gap fixes).
+    # ellipsoid radius ratio vs the helmet ellipsoid (center 0,0,0.92;
+    # radii 0.30/0.30/0.28): a shell hugging the head scores ~1.0-1.06.
+    import math
+    slot_of = {}
+    for pi, poly in enumerate(body.data.polygons):
+        sname = body.data.materials[poly.material_index].name \
+            if body.data.materials[poly.material_index] else ""
+        for li in poly.loop_indices:
+            slot_of.setdefault(body.data.loops[li].vertex_index, sname)
+    visor_rs, eye_r_max = [], 0.0
+    dark_low = hand_low = cream_front = 0
+    for v in body.data.vertices:
+        x, y, z = v.co.x, v.co.y, v.co.z
+        sname = slot_of.get(v.index, "")
+        r = math.sqrt((x / 0.30) ** 2 + (y / 0.30) ** 2 + ((z - 0.92) / 0.28) ** 2)
+        if sname == "Visor" and y < -0.24:  # front screen face only
+            visor_rs.append(r)
+        if sname == "EyeGlow":
+            eye_r_max = max(eye_r_max, r)
+        if sname == "DarkJoint" and z < 0.025:
+            dark_low += 1
+        if 0.17 <= z <= 0.235 and 0.13 <= abs(x) <= 0.25:
+            hand_low += 1
+        if (sname == "CreamTrim" and y < -0.25 and 0.15 <= abs(x) <= 0.25
+                and 0.75 <= z <= 1.10):
+            cream_front += 1
+    if visor_rs:
+        facts["visor_r"] = [round(min(visor_rs), 3), round(max(visor_rs), 3)]
+    facts["eye_r_max"] = round(eye_r_max, 3)
+    facts["dark_low_count"] = dark_low
+    facts["hand_low_count"] = hand_low
+    facts["cream_front_count"] = cream_front
+    for slot in body.data.materials:
+        if slot and slot.use_nodes and slot.name == "Visor":
+            facts["visor_wave"] = any(n.type == "TEX_WAVE" for n in slot.node_tree.nodes)
+
     zs = [v.co.z for v in body.data.vertices]
     zmin, zmax = min(zs), max(zs)
     facts["height"] = round(zmax - zmin, 4)
@@ -157,6 +207,26 @@ def main():
         failures.append("no emissive green eye material")
     if not has(lambda m: m["base"][0] > 0.5 and m["base"][1] > 0.4 and m["base"][2] < 0.5):
         failures.append("no warm cream/gold trim material")
+
+    # visual-analyst gap fixes (round 2), external geometry evidence
+    if facts["dark_low_count"] != 0:
+        failures.append("gray sole plate under feet: %d dark verts at z<0.025"
+                        % facts["dark_low_count"])
+    if facts["hand_low_count"] < 300:
+        failures.append("hands still polyhedral blocks: hand-region verts=%d < 300"
+                        % facts["hand_low_count"])
+    vr = facts["visor_r"]
+    if not (0.99 <= vr[0] and vr[1] <= 1.10):
+        failures.append("visor not a curved shell hugging the head: r-span=%s "
+                        "(want within [0.99,1.10])" % (vr,))
+    if facts["eye_r_max"] > 1.10:
+        failures.append("eyes float off the visor: eye_r_max=%.3f > 1.10"
+                        % facts["eye_r_max"])
+    if facts["cream_front_count"] < 20:
+        failures.append("no gold/cream rim at visor front: cream_front_count=%d"
+                        % facts["cream_front_count"])
+    if not facts["visor_wave"]:
+        failures.append("visor material has no scanline (wave) node")
 
     # chibi proportions
     if facts["head_share"] < 0.30:
