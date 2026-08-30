@@ -300,6 +300,10 @@
         {
           "view_id": "view-va-memory-001",
           "view_name": "视觉分析员长期记忆"
+        },
+        {
+          "view_id": "va-wm-001",
+          "view_name": "视觉分析员工作记忆"
         }
       ]
     },
@@ -479,7 +483,7 @@
       "id": "va-mem-20260830-action-review",
       "type": "Business Object",
       "name": "会话记忆-2026-08-30-九动作渲染复核",
-      "description": "任务：独立复核 robot-modeler 修蒙皮后 9 张动作证据图（relax/tpose/apose/idle/wave/walk/nod/look/run）。结论 7 达标 2 待改进：蒙皮缺陷（青绿飘带拉伸臂）未复现、臂段随动正确，修复有效；tpose 双臂水平、apose 45°下外、relax/idle 自然站立（两图静态近似）、walk 腿步+对侧摆臂、run 高抬膝+双臂屈摆且与 walk 可区分、nod 低头方向正确（幅度偏小）。待改进：①wave 上举臂在屏幕右=角色左臂（机器人面朝相机），与『右臂上举』不符，需确认朝向约定或镜像修正；②look 头部以面内 roll 侧倾为主、面罩仍正对相机缺水平 yaw，读作歪头疑问，侧视辨识度不足。交接：只读角色不执行 git，本 KG 登记留待委派方提交并登记 commit。",
+      "description": "任务：独立复核 robot-modeler 修蒙皮后 9 张动作证据图（relax/tpose/apose/idle/wave/walk/nod/look/run）。初轮结论 7 达标 2 待改进：①wave 上举臂在屏幕右=角色左臂；②look 以面内 roll 歪头为主、缺水平 yaw；nod 方向正确但幅度偏小。建模员修正（commit 646ede1）后复验 wave/look/nod 三图逐项全达标：wave 屏幕左（=解剖学右）臂上举、上臂水平肘屈约90°、前臂竖直、手在头侧手指张开、对侧臂下垂；look 头水平 yaw 侧转、面罩侧转、对侧耳罩被遮挡、三角眼随面罩偏转、无 roll 歪头；nod 俯角明显加大、头顶金冠条露出增多、面罩透视收缩眼位下移。无回归：刚性部件蒙皮无拉伸、躯干/关节完好。交接：只读角色不执行 git，KG 登记留待委派方提交并登记 commit。",
       "attributes": [
         {
           "name": "commit",
@@ -510,6 +514,26 @@
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
       "description": "会话总结（2026-08-30，动作轴向修正轮）：目标=修正视觉分析员指出的 wave 举臂侧别（改解剖学右臂）与 look 轴向（roll→yaw）+ nod 俯角加深。完成：humanoid_control.py apply_wave 改驱 '.L' 链、apply_look 改 local Y yaw 0.55rad、apply_nod 0.22→0.45rad；test_humanoid_actions.py 断言按新正确行为更新；重渲 9 张证据图（同前相机）；多模态目检 wave/look/nod 全达标；5 验收测试 + validateSystemArchitecture 通过；commit 646ede1 登记于 twin-control-001/humanoid-build-001/humanoid-model-001 并写入 view-rm-memory-001。关键决策：不改骨名（保 FK 契约与 twin-control 链路），左右约定以 docstring 文档化（'.L' 链=解剖学右，world -X=屏幕左）。遗留：无阻断项。经验：rig 命名与解剖学相反是长期陷阱；head 骨 X=pitch/Y=yaw/Z=roll。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T1"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "lastSummaryAt",
+          "value": "2026-08-30"
+        }
+      ]
+    },
+    {
+      "id": "va-wm-summary-001",
+      "name": "visual-analyst T1 会话总结",
+      "type": "Business Object",
+      "description": "会话总结（2026-08-30，wave/look/nod 复验轮）：目标=建模员修正后逐张复验 action_wave/look/nod.png 三张证据图。结果：三项全达标（wave：屏幕左=解剖学右臂上举、肘屈约90°、前臂竖直、手在头侧手指张开、对侧臂下垂；look：水平 yaw 侧转、面罩侧转对侧耳罩被遮挡、三角眼随动、无 roll 歪头；nod：俯角明显加大）。蒙皮无拉伸回归。可复用识别要点：朝向约定=机器人面朝相机、屏幕左即解剖学右臂；yaw 三件套=面罩侧转+对侧耳罩遮挡+头 upright 不倾；nod=头顶冠条露出+面罩透视收缩+眼位下移。剩余 TODO：无，本任务闭环。交接：只读角色，git commit 登记留待委派方。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -650,6 +674,16 @@
       "description": "robot-modeler-001 的 T1 工作记忆子视图（会话总结，幂等覆盖）。",
       "included_elements": [
         "rm-wm-summary-001"
+      ],
+      "included_relationships": []
+    },
+    {
+      "view_id": "va-wm-001",
+      "view_name": "视觉分析员工作记忆",
+      "description": "视觉分析员 T1 工作记忆视图：单一会话总结元素，幂等覆盖。",
+      "parent_element_id": "visual-analyst-001",
+      "included_elements": [
+        "va-wm-summary-001"
       ],
       "included_relationships": []
     }
