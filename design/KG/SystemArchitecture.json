@@ -85,7 +85,20 @@
       "id": "abot-vision-001",
       "name": "aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
       "type": "Goal",
-      "description": "aBot 北极星（2026-08-30 人类伙伴确认）：开发人形机器人。当前早期阶段，用 Blender 构建机器人数字孪生（演示真实机器人形态），在此之上探索机器人的软件与智能部分（运动控制/感知/LLM 智能）。注：『为 AGENT 提供长期记忆系统』是 ArchGraph 项目的北极星，非 aBot；aBot 可将 ArchGraph 长期记忆作为外部协同能力复用（机器人『大脑』的记忆层），但非 aBot 自身目标。"
+      "description": "aBot 北极星（2026-08-30 人类伙伴确认）：开发人形机器人。当前早期阶段，用 Blender 构建机器人数字孪生（演示真实机器人形态），在此之上探索机器人的软件与智能部分（运动控制/感知/LLM 智能）。注：『为 AGENT 提供长期记忆系统』是 ArchGraph 项目的北极星，非 aBot；aBot 可将 ArchGraph 长期记忆作为外部协同能力复用（机器人『大脑』的记忆层），但非 aBot 自身目标。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "ebc39b7",
+          "description": "Vision clarification + removed ArchGraph north-star contamination (overseer-vision-001 deleted); file: design/KG/SystemArchitecture.json"
+        }
+      ]
+    },
+    {
+      "id": "twin-control-001",
+      "name": "数字孪生本地操控服务 (Twin Control)",
+      "type": "Application Service",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py。"
     }
   ],
   "relationships": [
@@ -108,6 +121,16 @@
       "target_name": "aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
       "name": "数字孪生模型支撑 aBot 愿景",
       "statement": "Humanoid Character Model (Blender) --(Association)--> aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索"
+    },
+    {
+      "id": "twin-control-serves-humanoid-model",
+      "type": "Association",
+      "source_id": "twin-control-001",
+      "source_name": "数字孪生本地操控服务 (Twin Control)",
+      "target_id": "humanoid-model-001",
+      "target_name": "Humanoid Character Model (Blender)",
+      "name": "操控服务使模型可被 Agent 实时操控",
+      "statement": "数字孪生本地操控服务 (Twin Control) --(Association)--> Humanoid Character Model (Blender)"
     }
   ],
   "views": [
@@ -155,10 +178,12 @@
       "included_elements": [
         "humanoid-model-001",
         "humanoid-build-001",
-        "abot-vision-001"
+        "abot-vision-001",
+        "twin-control-001"
       ],
       "included_relationships": [
-        "humanoid-model-serves-abot-vision"
+        "humanoid-model-serves-abot-vision",
+        "twin-control-serves-humanoid-model"
       ]
     }
   ]
