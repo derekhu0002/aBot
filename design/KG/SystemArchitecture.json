@@ -553,6 +553,12 @@
           "description": "T1 summary + re-verify record committed by delegator; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "description": "会话记录（2026-08-30，关键动作活动展示）：委派 robot-modeler 驱动 chibi 机器人完成 9 个关键动作并渲染证据图（relax/tpose/apose/idle/wave/walk/nod/look/run，assets/humanoid/action_*.png 统一前相机 1280×1280）。修复两个根因缺陷：①蒙皮漏权（bone-heat 把躯干绑到下垂臂骨→改刚性按部件绑定，同时修复 fix_weights existing_ok 遇 RuntimeError break 的 bug）②wave FK 轴向错误（实证探测：解剖学右臂=world -X=屏幕左=.L 链，apply_wave 改驱 .L）。视觉分析员两轮复核：首轮 7/9 达标（wave 举左臂、look 歪头 roll 待改），修正（wave 右臂、look 纯 yaw、nod 0.45）后 9/9 全达标、无回归。新增 twin-control-key-actions-contract 验收用例（tests/acceptance/test_humanoid_actions.py）。关键经验：改权重后必须驱动渲染验证；FK 轴向须实证探测不可凭文档；朝向约定=面朝相机屏幕左即解剖学右臂；yaw 三件套=面罩侧转+对侧耳罩遮挡+头 upright。遗留：旧 driven_*.png 为 restyle 前产物可清理；如需视频展示可后续用系统 ffmpeg。",
+      "id": "session-summary-2026-08-30-key-actions",
+      "name": "会话记录 2026-08-30 (关键动作活动展示)",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -639,7 +645,8 @@
         "handoff-001",
         "session-summary-2026-08-30",
         "session-summary-2026-08-30-visual-analyst",
-        "session-summary-2026-08-30-robot-modeler"
+        "session-summary-2026-08-30-robot-modeler",
+        "session-summary-2026-08-30-key-actions"
       ],
       "included_relationships": [
         "humanoid-model-serves-abot-vision",
