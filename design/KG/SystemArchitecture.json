@@ -66,6 +66,15 @@
           "name": "file_paths",
           "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; scripts/blender_humanoid/build_humanoid.py"
         }
+      ],
+      "testcases": [
+        {
+          "name": "humanoid-model-robot-restyle-rig-integrity",
+          "type": "Acceptance Test",
+          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与两张预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%（chibi 比例）、预览为 1280x1280 PNG。",
+          "Input": "assets/humanoid/humanoid.blend + preview_front.png + preview_3quarter.png",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_model.py"
+        }
       ]
     },
     {
@@ -78,6 +87,15 @@
           "name": "commit",
           "value": "c5615ee",
           "description": "P1 完成：数字孪生可被本机 Agent 实时操控"
+        }
+      ],
+      "testcases": [
+        {
+          "name": "humanoid-build-reproducible",
+          "type": "Acceptance Test",
+          "description": "GIVEN 仓库含 scripts/blender_humanoid/build_humanoid.py WHEN 以 ABOT_HUMANOID_OUT_DIR 指向临时目录无头运行构建 THEN 退出码 0 且在该目录再生 humanoid.blend 与两张 1280x1280 预览 PNG（不触碰已提交产物，证明脚本可复现）。",
+          "Input": "scripts/blender_humanoid/build_humanoid.py",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_build.py"
         }
       ]
     },
