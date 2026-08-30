@@ -55,7 +55,7 @@
       "name": "Humanoid Character Model (Blender)",
       "alias": "humanoid-model-001",
       "type": "Artifact",
-      "description": "程序化生成的 chibi 机器人 3D 模型（Blender 5.1 无头 + bpy），2026-08-30 按 reference_target.png 改造：超大红铜金属头盔+黑色圆角面罩+绿色自发光三角眼+耳罩/顶部饰带/天线、小躯干装甲（胸口自发光三角徽记）、分段机械臂、厚靴（奶油鞋头+青色点缀），总高约 1.2m、head 骨主导跨度 47% 的 chibi 比例。保留 twin-control FK 骨架（root/spine/chest/neck/head + L/R 四肢同名骨）与自动权重+距离衰减兜底，pose/motion/FK/state 链路冒烟通过。输出 .blend 与两张 1280x1280 预览图，二进制存于仓库。",
+      "description": "程序化生成的 chibi 机器人 3D 模型（Blender 5.1 无头 + bpy），2026-08-30 按 reference_target.png 改造并经视觉分析员第二轮差距修复：超大红铜金属头盔 + 黑色圆角矩形弯曲面罩（球壳布尔贴合头部曲率 + 扫描线质感 + 金/奶油包边）+ 贴合面罩的绿色自发光三角眼 + 耳罩/顶带/天线 + 头盔铆钉/面板缝；小躯干装甲（胸口自发光三角徽记 + 腰带饰边）；分段机械臂（圆润手掌 + 三指 + 拇指，消除多面块）；厚靴（圆润金色鞋底、奶油靴口、青色线缆环，删除灰色平板底座），总高约 1.22m chibi 比例。保留 twin-control FK 骨架（root/spine/chest/neck/head + L/R 四肢同名骨）与蒙皮，FK 姿势变形冒烟通过。输出 .blend、两张 1280x1280 预览与面罩/手部特写，二进制存于仓库。",
       "attributes": [
         {
           "name": "commit",
@@ -64,7 +64,7 @@
         },
         {
           "name": "file_paths",
-          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py"
+          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/preview_closeup_visor.png; assets/humanoid/preview_closeup_hand.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py"
         },
         {
           "name": "commit",
@@ -89,13 +89,23 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "1a259d0",
+          "description": "round-2 visual gap fixes: curved scanline visor + gold rim + hugging eyes, fingered hands, gold sole pucks, boot cable loops, rivets/panel seams/belt; extended model acceptance test with external geometry assertions"
+        },
+        {
+          "name": "commit",
+          "value": "9ae0e65",
+          "description": "regenerated humanoid.blend + previews with gap fixes; added preview_closeup_visor.png / preview_closeup_hand.png"
         }
       ],
       "testcases": [
         {
           "name": "humanoid-model-robot-restyle-rig-integrity",
           "type": "Acceptance Test",
-          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与两张预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%（chibi 比例）、预览为 1280x1280 PNG。",
+          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%、预览为 1280x1280 PNG；且第二轮差距修复外部几何成立：脚下无深灰平板（z<0.025 无 DarkJoint 顶点）、手部区域顶点数 ≥300（圆润手+手指）、面罩前屏顶点椭球半径比落在 [0.99,1.10]（贴合头部曲率）、眼半径比 ≤1.10（不凸出悬浮）、面罩前侧有金/奶油包边顶点、面罩材质含扫描线 wave 节点。",
           "Input": "assets/humanoid/humanoid.blend + preview_front.png + preview_3quarter.png",
           "acceptanceCriteria": "tests/acceptance/test_humanoid_model.py"
         }
@@ -105,7 +115,7 @@
       "id": "humanoid-build-001",
       "name": "人形角色建模流程",
       "type": "Business Process",
-      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle：按 reference_target.png 产出 chibi 机器人外观；ABOT_HUMANOID_OUT_DIR 可重定向输出目录做可复现验证；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply）③本地控制服务+Agent 客户端（本机 Agent 实时操控：姿势/动作/FK/状态）④提交登记。",
+      "description": "人形角色建模与数字孪生操控流程：①环境勘察（无内置人形生成器，采用 bpy 程序化建模）②脚本生成模型（2026-08-30 restyle + 第二轮视觉差距修复：球壳∩圆角棱柱布尔产出贴合头部曲率的弯曲面罩/包边/贴平三角眼，布尔后必须 clear 空材质槽再指定材质否则渲染默认白；圆润手掌+手指、金色圆润鞋底替代灰色平板、靴侧线缆环替代尖刺、铆钉/面板缝/腰带硬表面细节；基元约定 radius=1/depth=2、join 前应用 subsurf、join 后 transform_apply；ABOT_HUMANOID_OUT_DIR 可复现）③本地控制服务+Agent 客户端（姿势/动作/FK/状态）④提交登记。",
       "attributes": [
         {
           "name": "commit",
@@ -120,6 +130,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "1a259d0",
+          "description": "round-2 gap fixes in build_humanoid.py (boolean shell visor/eyes, material-slot fix, fingered hands, gold soles, cables, rivets)"
         }
       ],
       "testcases": [
@@ -350,6 +365,24 @@
           "description": "Chibi restyle review record registered by visual-analyst; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260830-gapfixes-round2",
+      "name": "建模记忆 2026-08-30 (visual gap fixes round 2)",
+      "type": "Business Object",
+      "description": "会话记录（2026-08-30，机器人3D建模员）：按视觉分析员差距清单逐项修复 chibi 机器人。交付：①手部改圆润手掌+三指+拇指；②删除脚下深灰平板、改圆润金色鞋底+奶油靴口+青色线缆环；③面罩改球壳布尔弯曲圆角矩形屏（贴合头部曲率）+扫描线（wave→ramp→bump/color）+金/奶油包边，三角眼改球壳轮廓贴合不凸出；④硬表面：头盔铆钉×4+金螺栓×2+面板缝×2+腰带。回归 4 测试全过 + FK 冒烟（head 骨 199/200 顶点变形）+ validate 过。关键坑：①布尔 EXACT 结果网格自带一个空材质槽，append 会成第二槽导致面默认白 → 必须 materials.clear()+append+逐面 index=0；②球壳棱柱是实心块（含径向侧壁/内背），外部几何断言要只取前屏顶点（y<-0.24）；③make_primitive 第 5 位置参是 rotation，材质必须关键字传；④make_shell 球体须与头盔同心、cutter 用 center+offset 定位。test_humanoid_model.py 新增 6 项外部几何断言（无底板/手部顶点数/面罩 r 跨度/眼 r/前包边/扫描线节点）。遗留：细节外观可再委派 visual-analyst-001 复核；线缆环与参考图小线缆仍有形态差。",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "1a259d0",
+          "description": "round-2 gap fixes code+test"
+        },
+        {
+          "name": "commit",
+          "value": "9ae0e65",
+          "description": "regenerated artifacts + closeups"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -460,7 +493,8 @@
       "parent_element_name": "机器人3D建模员",
       "description": "机器人3D建模员（robot-modeler-001）的长期记忆子视图，挂载于 Actor 之下，承载建模侧历史工作信息。",
       "included_elements": [
-        "rm-mem-20260830-chibi-restyle"
+        "rm-mem-20260830-chibi-restyle",
+        "rm-mem-20260830-gapfixes-round2"
       ],
       "included_relationships": []
     }
