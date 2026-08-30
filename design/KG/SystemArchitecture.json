@@ -150,6 +150,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "50cbe8d",
+          "description": "visual-analyst actor + opencode agent + acceptance test"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/visual-analyst.md; tests/acceptance/test_visual_analyst.py"
         }
       ],
       "description": "aBot 视觉分析员：负责图像/视频/多模态内容的识别、理解、分析与报告。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'visual-analyst'（.opencode/agent/visual-analyst.md），供其他 Actor 按 CapabilityDelegationGuideline 委派视觉分析子任务。稳定身份 visual-analyst-001。",
