@@ -102,10 +102,6 @@
           "description": "rigid per-part skinned humanoid.blend + 9 action evidence stills action_*.png; regenerated previews; files: assets/humanoid/humanoid.blend, assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png, assets/humanoid/preview_*.png"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "646ede1",
           "description": "regenerated 9 action evidence stills with fixed wave (anatomical right arm), look (horizontal yaw), nod (deeper pitch); same unified front camera"
@@ -114,6 +110,10 @@
           "name": "commit",
           "value": "c3daae7",
           "description": "regenerated humanoid.blend with 9 baked joint-rotation Actions + refreshed previews and action evidence stills; files: assets/humanoid/humanoid.blend, assets/humanoid/preview_*.png, assets/humanoid/action_*.png"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -153,10 +153,6 @@
           "description": "rigid per-part skinning in build pipeline (replaces leaky bone-heat auto weights) + fix_weights existing_ok scan fix; files: scripts/blender_humanoid/build_humanoid.py"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "646ede1",
           "description": "wave/look/nod axis+side fixes with documented side/head-axis conventions; files: scripts/blender_humanoid/humanoid_control.py, scripts/blender_humanoid/demo_agent.py, tests/acceptance/test_humanoid_actions.py"
@@ -174,6 +170,10 @@
           "name": "commit",
           "value": "64eefa6",
           "description": "build reproducibility test extended: regenerated blend must ship 9 joint-only Actions; file: tests/acceptance/test_humanoid_build.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -221,10 +221,6 @@
           "description": "9 key-action evidence stills assets/humanoid/action_{relax,tpose,apose,idle,wave,walk,nod,look,run}.png (uniform front camera 1280x1280) + rigid-skinned humanoid.blend"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "646ede1",
           "description": "wave raises anatomical right arm ('.L' chain), look = horizontal yaw, deeper nod; action contract test aligned; files: scripts/blender_humanoid/humanoid_control.py, scripts/blender_humanoid/demo_agent.py, tests/acceptance/test_humanoid_actions.py, assets/humanoid/action_*.png"
@@ -242,6 +238,10 @@
           "name": "commit",
           "value": "64eefa6",
           "description": "baked-Action playback contract in test_humanoid_actions.py (Part B, no-driver frame evaluation); files: tests/acceptance/test_humanoid_actions.py, tests/acceptance/test_humanoid_build.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -618,6 +618,178 @@
       "id": "rm-mem-20260830-baked-actions",
       "name": "建模记忆 2026-08-30 (baked joint-rotation Actions for GUI playback)",
       "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "tech-insight-lead"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-max"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 技术洞察团队负责人（TAB 主席）：确定洞察主题与优先级（对齐路线图 P2-P5）、组织委员会评审（Adopt/Trial/Assess/Caution）、验收洞察报告并交付项目总管。模型 alibaba-cn/qwen3.8-max。对应 opencode agent 'tech-insight-lead'（.opencode/agent/tech-insight-lead.md）。稳定身份 tech-insight-lead-001。",
+      "id": "tech-insight-lead-001",
+      "name": "技术洞察负责人",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-insight-lead-001 元素 + 仓库 .opencode/agent/tech-insight-lead.md",
+          "acceptanceCriteria": "tests/acceptance/test_tech_insight_lead.py",
+          "description": "GIVEN aBot 意图图含技术洞察负责人 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-insight-lead、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/tech-insight-lead.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "tech-insight-lead-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "tech-radar-analyst"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-flash"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 技术洞察团队雷达分析师（CTI 情报侦察）：四象限（技术/平台/工具/语言框架）扫描机器人物理/感知/智能/平台生态，产出 blip 技术情报卡（含成熟度/信源/证据）。多模态模型 alibaba-cn/qwen3.8-flash。对应 opencode agent 'tech-radar-analyst'（.opencode/agent/tech-radar-analyst.md）。稳定身份 tech-radar-analyst-001。",
+      "id": "tech-radar-analyst-001",
+      "name": "技术雷达分析师",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-radar-analyst-001 元素 + 仓库 .opencode/agent/tech-radar-analyst.md",
+          "acceptanceCriteria": "tests/acceptance/test_tech_radar_analyst.py",
+          "description": "GIVEN aBot 意图图含技术雷达分析师 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-radar-analyst、model 属性=alibaba-cn/qwen3.8-flash，且 .opencode/agent/tech-radar-analyst.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "tech-radar-analyst-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "tech-evaluator"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-max"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 技术洞察团队评估师（TAB 评审委员）：对技术情报卡做 Adopt/Trial/Assess/Caution 判定并给出理由与架构影响评估。模型 alibaba-cn/qwen3.8-max。对应 opencode agent 'tech-evaluator'（.opencode/agent/tech-evaluator.md）。稳定身份 tech-evaluator-001。",
+      "id": "tech-evaluator-001",
+      "name": "技术评估师",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-evaluator-001 元素 + 仓库 .opencode/agent/tech-evaluator.md",
+          "acceptanceCriteria": "tests/acceptance/test_tech_evaluator.py",
+          "description": "GIVEN aBot 意图图含技术评估师 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-evaluator、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/tech-evaluator.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "tech-evaluator-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "tech-validator"
+        },
+        {
+          "name": "model",
+          "value": "deepseek/deepseek-v4-flash"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 技术洞察团队实验验证工程师（预研验证）：用代码/脚本对关键候选技术做 PoC、基准测试与复现，产出可执行证据，验证驱动选型。模型 deepseek/deepseek-v4-flash。对应 opencode agent 'tech-validator'（.opencode/agent/tech-validator.md）。稳定身份 tech-validator-001。",
+      "id": "tech-validator-001",
+      "name": "实验验证工程师",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-validator-001 元素 + 仓库 .opencode/agent/tech-validator.md",
+          "acceptanceCriteria": "tests/acceptance/test_tech_validator.py",
+          "description": "GIVEN aBot 意图图含实验验证工程师 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-validator、model 属性=deepseek/deepseek-v4-flash，且 .opencode/agent/tech-validator.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "tech-validator-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "tech-report-writer"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-flash"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 技术洞察团队报告撰写员：整合 blips+评估+验证为结构化中文洞察报告与技术路线图建议，交付项目总管。多模态模型 alibaba-cn/qwen3.8-flash。对应 opencode agent 'tech-report-writer'（.opencode/agent/tech-report-writer.md）。稳定身份 tech-report-writer-001。",
+      "id": "tech-report-writer-001",
+      "name": "洞察报告撰写员",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-report-writer-001 元素 + 仓库 .opencode/agent/tech-report-writer.md",
+          "acceptanceCriteria": "tests/acceptance/test_tech_report_writer.py",
+          "description": "GIVEN aBot 意图图含洞察报告撰写员 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-report-writer、model 属性=alibaba-cn/qwen3.8-flash，且 .opencode/agent/tech-report-writer.md 存在且 frontmatter model 与 Actor 一致。",
+          "name": "tech-report-writer-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
+    },
+    {
+      "description": "aBot 技术洞察协作流程（雷达周期）：①负责人提出洞察主题/待评估技术清单（对齐 P2-P5）②雷达分析师扫描产出 blips（情报卡）③委员会评审（评估师 Adopt/Trial/Assess/Caution 四环判定）④关键候选交实验验证工程师 PoC/基准验证 ⑤报告撰写员整合成稿 ⑥负责人验收并交付项目总管、洞察登记入库。由 5 名团队成员角色承担（Assignment），Association 关联 aBot 愿景。",
+      "id": "tech-insight-process-001",
+      "name": "技术洞察流程",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 tech-insight-process-001 元素 + tech-insight-team-001 视图",
+          "acceptanceCriteria": "tests/acceptance/test_tech_insight_process.py",
+          "description": "GIVEN aBot 意图图含技术洞察流程 Business Process WHEN 校验团队结构与协作关系 THEN 流程存在且类型为 Business Process、5 名团队 Actor 均 Assignment 到该流程、流程 Association 关联 abot-vision-001、团队子视图 tech-insight-team-001 挂载于流程下且包含全部 Actor 与 Assignment 关系。",
+          "name": "tech-insight-process-assignments",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Process",
+      "subdiagram_views": [
+        {
+          "view_id": "tech-insight-team-001",
+          "view_name": "技术洞察团队"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -650,6 +822,66 @@
       "target_name": "Humanoid Character Model (Blender)",
       "name": "操控服务使模型可被 Agent 实时操控",
       "statement": "数字孪生本地操控服务 (Twin Control) --(Association)--> Humanoid Character Model (Blender)"
+    },
+    {
+      "id": "lead-assigned-to-insight-process",
+      "name": "负责人承担技术洞察流程",
+      "source_id": "tech-insight-lead-001",
+      "source_name": "技术洞察负责人",
+      "statement": "技术洞察负责人 --(Assignment)--> 技术洞察流程",
+      "target_id": "tech-insight-process-001",
+      "target_name": "技术洞察流程",
+      "type": "Assignment"
+    },
+    {
+      "id": "radar-assigned-to-insight-process",
+      "name": "雷达分析师承担技术洞察流程",
+      "source_id": "tech-radar-analyst-001",
+      "source_name": "技术雷达分析师",
+      "statement": "技术雷达分析师 --(Assignment)--> 技术洞察流程",
+      "target_id": "tech-insight-process-001",
+      "target_name": "技术洞察流程",
+      "type": "Assignment"
+    },
+    {
+      "id": "evaluator-assigned-to-insight-process",
+      "name": "评估师承担技术洞察流程",
+      "source_id": "tech-evaluator-001",
+      "source_name": "技术评估师",
+      "statement": "技术评估师 --(Assignment)--> 技术洞察流程",
+      "target_id": "tech-insight-process-001",
+      "target_name": "技术洞察流程",
+      "type": "Assignment"
+    },
+    {
+      "id": "validator-assigned-to-insight-process",
+      "name": "验证工程师承担技术洞察流程",
+      "source_id": "tech-validator-001",
+      "source_name": "实验验证工程师",
+      "statement": "实验验证工程师 --(Assignment)--> 技术洞察流程",
+      "target_id": "tech-insight-process-001",
+      "target_name": "技术洞察流程",
+      "type": "Assignment"
+    },
+    {
+      "id": "writer-assigned-to-insight-process",
+      "name": "报告撰写员承担技术洞察流程",
+      "source_id": "tech-report-writer-001",
+      "source_name": "洞察报告撰写员",
+      "statement": "洞察报告撰写员 --(Assignment)--> 技术洞察流程",
+      "target_id": "tech-insight-process-001",
+      "target_name": "技术洞察流程",
+      "type": "Assignment"
+    },
+    {
+      "id": "insight-process-relates-abot-vision",
+      "name": "技术洞察关联 aBot 愿景",
+      "source_id": "tech-insight-process-001",
+      "source_name": "技术洞察流程",
+      "statement": "技术洞察流程 --(Association)--> aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
+      "target_id": "abot-vision-001",
+      "target_name": "aBot 人形机器人：Blender 数字孪生演示与软硬件/智能探索",
+      "type": "Association"
     }
   ],
   "views": [
@@ -685,10 +917,23 @@
         "1240",
         "project-overseer-001",
         "visual-analyst-001",
-        "robot-modeler-001"
+        "robot-modeler-001",
+        "tech-insight-lead-001",
+        "tech-radar-analyst-001",
+        "tech-evaluator-001",
+        "tech-validator-001",
+        "tech-report-writer-001",
+        "tech-insight-process-001",
+        "abot-vision-001"
       ],
       "included_relationships": [
-        "1161"
+        "1161",
+        "lead-assigned-to-insight-process",
+        "radar-assigned-to-insight-process",
+        "evaluator-assigned-to-insight-process",
+        "validator-assigned-to-insight-process",
+        "writer-assigned-to-insight-process",
+        "insight-process-relates-abot-vision"
       ]
     },
     {
@@ -758,6 +1003,27 @@
         "va-wm-summary-001"
       ],
       "included_relationships": []
+    },
+    {
+      "description": "技术洞察团队协作视图（挂载于技术洞察流程下）：团队 5 角色 + 协作流程。",
+      "included_elements": [
+        "tech-insight-lead-001",
+        "tech-radar-analyst-001",
+        "tech-evaluator-001",
+        "tech-validator-001",
+        "tech-report-writer-001",
+        "tech-insight-process-001"
+      ],
+      "included_relationships": [
+        "lead-assigned-to-insight-process",
+        "radar-assigned-to-insight-process",
+        "evaluator-assigned-to-insight-process",
+        "validator-assigned-to-insight-process",
+        "writer-assigned-to-insight-process"
+      ],
+      "parent_element_id": "tech-insight-process-001",
+      "view_id": "tech-insight-team-001",
+      "view_name": "技术洞察团队"
     }
   ]
 }
