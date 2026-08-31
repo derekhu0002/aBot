@@ -988,6 +988,11 @@
         {
           "name": "deploy_url",
           "value": "https://argo.derekworkspacev5.com/shopping/"
+        },
+        {
+          "name": "commit",
+          "value": "e7c6173",
+          "description": "Updated WeChat draft: non-clickable body links replaced with 阅读原文 guidance, source_url set; new media_id=BRZAMZ3b-CaOBH8qdG2KTVDG96YQyKoMicEX33ecUzIUzwpHKVauEKbbf9CreUGk; files: docs/booklist-robot-ai/robot-ai-kids-booklist.wechat.md"
         }
       ]
     }
