@@ -913,7 +913,14 @@
       "description": "aBot 技术洞察报告（2026-08-31，P2 物理与运动）：人形机器人物理仿真引擎选型。一句话结论：P2 采用 MuJoCo 作主物理内核（Adopt），Blender 保持渲染层，二者间加薄 physics_adapter 适配；NVIDIA Isaac Sim/PhysX 5 仅作有界试点（Trial）为 P3 感知/P4 智能储备；Newton、Isaac Lab、Genesis 列入跟踪评估（Assess）；Bullet/PyBullet 在人形步态/平衡明确回避（Caution）。候选对比：MuJoCo（DeepMind，Apache2.0，接触误差≈12%，headless/轻量/Python/MJCF，学术界标准）=Adopt；PhysX5/Isaac Sim6.0 GA（GPU 并行/照片级渲染/Newton experimental/SDG/ROS2，重且 GPU 依赖）=Trial；Isaac Lab3.0（Beta）=Assess；Newton v1.5（统一接口+MuJoCo Warp 后端，minor 有 breaking changes，跟踪至 2.x）=Assess；Genesis（证据薄）=Assess；Webots/Gazebo/CoppeliaSim（接触一般，P5 ROS 衔接再评）=Assess；Bullet/PyBullet（接触误差≈40% 单脚站抖）=Caution。建议路径：MuJoCo 物理内核+Blender 渲染层+physics_adapter（pose/motion/FK→qpos/ctrl，状态回灌 Blender）；单一事实源双出口（build_humanoid.py 程序化参数直接生成 MJCF，保持 .L=解剖学右=world -X、head local Y=竖直、面朝 -Y 约定）；碰撞用简化原语（capsule/box/sphere）；chibi 头重需显式配重。风险：误差数字待 PoC 复测（待验证）；MJCF 轴向映射错误难排查；chibi 质量属性缺失；GPU 档次未知（门控 Isaac 试点）；Newton/IsaacLab Beta。PoC 清单：POC-1 接触误差基准复测、POC-2 MJCF 生成+轴向断言、POC-3 physics_adapter 联通、POC-4 chibi 配重、POC-5 GPU 盘点+Isaac 试点评估、POC-6 Newton 跟踪。信源：DashScope WebSearch 检索（2026）+ tech-evaluator-001 四环判定 + tech-report-writer-001 整合。",
       "id": "tech-insight-report-p2-physics-001",
       "name": "技术洞察报告 P2 物理仿真选型 (2026-08-31)",
-      "type": "Business Object"
+      "type": "Business Object",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "3a2ead1",
+          "description": "Insight report registered; sources: DashScope WebSearch + tech-evaluator-001 + tech-report-writer-001"
+        }
+      ]
     }
   ],
   "relationships": [
