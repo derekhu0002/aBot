@@ -964,6 +964,23 @@
           "description": "Session record registered into overseer LTM; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "description": "公众号推广文章（2026-08-31）：《机器人与人工智能 · 儿童启蒙书单（8岁+）》——面向大众青少年的机器人/AI 入门荐书文章，格式与邮件推广版一致：8 本书（机器人方向 3 + AI 大脑方向 5），含封面、适龄、简介、推荐理由、右下角灰色小字京东推广/优惠券链接（6 本有、2 本待补）、家长建议、CTA。已通过 wechat-public-cli 创建公众号草稿（media_id=BRZAMZ3b-CaOBH8qdG2KTS8IYyJDLty25Isc_n-SxSHEa2fl2sjPEZmJpypReV8g）；个人未认证订阅号 API 发布不可用（48001），需公众号后台草稿箱手动发表。文案面向大众、无推广声明。",
+      "id": "wechat-draft-booklist-robot-ai-001",
+      "name": "公众号草稿：儿童机器人/AI 启蒙书单",
+      "type": "Business Object",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "06f5f01",
+          "description": "WeChat draft article + cover assets; files: docs/booklist-robot-ai/robot-ai-kids-booklist.wechat.md, docs/booklist-robot-ai/*.jpg"
+        },
+        {
+          "name": "file_paths",
+          "value": "docs/booklist-robot-ai/robot-ai-kids-booklist.wechat.md"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1110,7 +1127,8 @@
         "tech-insight-process-001",
         "abot-vision-001",
         "tech-insight-report-p2-physics-001",
-        "abot-kids-learning-001"
+        "abot-kids-learning-001",
+        "wechat-draft-booklist-robot-ai-001"
       ],
       "included_relationships": [
         "1161",
