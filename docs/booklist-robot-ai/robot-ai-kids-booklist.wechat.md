@@ -4,6 +4,7 @@ author: "编辑部"
 digest: "8 本书，两条主线——先认识会动的机器，再理解让机器变聪明的秘密。绘本、漫画、图鉴都有，按兴趣挑就行。"
 banner_path: "./dk-robot.jpg"
 open_comment: 0
+source_url: "https://argo.derekworkspacev5.com/shopping/"
 ---
 
 机器人正在走进每一个家庭和课堂，人工智能也已经成为孩子未来无法回避的能力。与其等到「来不及」，不如在好奇心最强的时候，用**绘本、漫画、图鉴**把这些听起来很高深的科技讲给孩子听。**读 + 玩结合**效果最好：读完一本书，再带孩子观察身边的机器人、扫地机，或动手搭个简单的小实验，把书上的「大脑」和「会动的机器」连起来。
@@ -27,7 +28,7 @@ open_comment: 0
 
 > **推荐理由：** 翻页机关书把抽象的「AI」变成「掀开看看」的互动游戏，最适合孩子第一次建立「机器也有大脑」的直观印象，亲子互动性极强。
 
-<a href="https://u.jd.com/kaozLqd" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -42,7 +43,7 @@ open_comment: 0
 
 > **推荐理由：** DK 以图为主、字少，孩子能对照身边的机器人/玩具看「关节、传感器怎么动」，把书上的构造和实物一一对应，学得最直观。
 
-<a href="https://u.jd.com/k6oqofZ" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -55,7 +56,7 @@ open_comment: 0
 
 > **推荐理由：** 体系化覆盖机器人类型与内部原理，适合孩子从「喜欢机器人」走向「想知道机器人为什么这样动」，作为进阶书架很扎实。
 
-<span style="color:#d1d5db;font-size:12px;">购买链接待补充</span>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -72,7 +73,7 @@ open_comment: 0
 
 > **推荐理由：** 把 AI 讲成和弟弟相处的家庭故事，情感与认知并重，孩子天然代入角色，是亲子共读 AI 概念的绝佳开场。
 
-<span style="color:#d1d5db;font-size:12px;">购买链接待补充</span>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -87,7 +88,7 @@ open_comment: 0
 
 > **推荐理由：** 用生活化故事讲清 AI 的「计算能力」，并由北京大学智能学院教授审读把关，帮孩子把「机器人怎么变聪明」理解得既准确又不枯燥。
 
-<a href="https://u.jd.com/k1orOf6" style="color:#9ca3af;font-size:12px;">领优惠券 ↗</a> &nbsp; <a href="https://u.jd.com/kDopzgm" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买（含优惠券）</span>
 
 ---
 
@@ -100,7 +101,7 @@ open_comment: 0
 
 > **推荐理由：** 人民日报社出品、漫画风格，主线是「计算思维」——这正是机器人和智能系统做决策的底层逻辑，能把孩子对科技的兴趣稳稳向前引一步。
 
-<a href="https://u.jd.com/kro894b" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -113,7 +114,7 @@ open_comment: 0
 
 > **推荐理由：** 覆盖面广，识别、语音、生成式 AI 都有，孩子遇到具体问题（比如机器人认路、听话）时随手可查、可翻，工具书属性强。
 
-<a href="https://u.jd.com/k1oGxie" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买</span>
 
 ---
 
@@ -128,7 +129,7 @@ open_comment: 0
 
 > **推荐理由：** 从计算机、程序讲到机器人与 AI，恰好把「机器人 + 大脑」这两半拆开讲透，系统性最强，适合作为整套共学的主线书目。
 
-<a href="https://u.jd.com/k1ovoJB" style="color:#9ca3af;font-size:12px;">领优惠券 ↗</a> &nbsp; <a href="https://u.jd.com/kGoaP9T" style="color:#9ca3af;font-size:12px;">去购买 ↗</a>
+<span style="color:#9ca3af;font-size:12px;">可点击文末「阅读原文」购买（含优惠券）</span>
 
 ---
 
@@ -145,7 +146,9 @@ open_comment: 0
 
 **愿每个孩子，都能在兴趣里遇见未来科技 🚀**
 
-喜欢哪一本，点下方链接带走，和孩子一起开启机器人与 AI 的探索之旅吧！
+喜欢哪一本，点下方「阅读原文」带走，和孩子一起开启机器人与 AI 的探索之旅吧！
+
+📚 完整购买列表（含优惠券）→ 点击文末「阅读原文」
 
 </div>
 
