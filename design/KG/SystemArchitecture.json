@@ -983,7 +983,11 @@
         {
           "name": "commit",
           "value": "0f99109",
-          "description": "Landing page with per-book JD affiliate links added; files: docs/booklist-robot-ai/landing.html"
+          "description": "Deployed landing page to /opt/shopping/index.html (nginx /shopping/ location added); live at https://argo.derekworkspacev5.com/shopping/"
+        },
+        {
+          "name": "deploy_url",
+          "value": "https://argo.derekworkspacev5.com/shopping/"
         }
       ]
     }
