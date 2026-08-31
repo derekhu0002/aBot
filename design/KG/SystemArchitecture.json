@@ -40,6 +40,10 @@
         {
           "view_id": "overseer-ltm-001",
           "view_name": "项目总管长期记忆"
+        },
+        {
+          "view_id": "overseer-wm-001",
+          "view_name": "项目总管工作记忆"
         }
       ],
       "attributes": [
@@ -853,6 +857,26 @@
           "description": "Session record registered into overseer LTM; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "attributes": [
+        {
+          "name": "lastSummaryAt",
+          "value": "2026-08-30"
+        },
+        {
+          "name": "memoryTier",
+          "value": "T1"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        }
+      ],
+      "description": "会话总结（2026-08-30）：aBot 数字孪生从占位人形演进为 chibi 机器人 + 组建协作团队 + 建立验收体系。目标：按参考图改造模型、驱动关键动作、组建技术洞察团队、规范多角色协作。关键进展：①模型 restyle 为 chibi 机器人（1.22m 金属红头盔/弯曲扫描线面罩/绿三角眼/分段机械臂/金底厚靴），两轮视觉差距修复（手/底座/面罩/靴/硬表面）；蒙皮改刚性按部件绑定（修复 bone-heat 漏权致抬臂拉伸）；9 关键动作烘焙为 joint-only 骨骼关键帧 Action 进 humanoid.blend，GUI 加载即播放可见。②动作 wave 举解剖学右臂(.L 链)/look 纯 yaw/nod 0.45，统一前相机 1280×1280 证据图。③团队：技术洞察 5 角色（负责人 qwen3.8-max、雷达分析师 qwen3.8-flash、评估师 qwen3.8-max、实验验证工程师 deepseek-v4-flash、报告撰写员 qwen3.8-flash）+ 协作流程 tech-insight-process-001（雷达周期六步，5 Assignment+Association→abot-vision）+ 视图 tech-insight-team-001。当前 8 个 Business Actor（项目总管/视觉分析员/机器人建模员/技术洞察5），每角色均有 opencode agent 与可执行验收测试（11 用例全通过）。关键决策：robot-modeler 定位主要建模 AGENT 职责泛化；多模态配 Qwen3.8（读图角色 flash、文本综合 max）；动作改烘焙进 blend。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐（下一步 P2 可委派技术洞察团队选型+实验验证）；旧 driven_*.png 可清理；新 agent 需重启 opencode 生效。经验：无头 timers 需手动 drive_once；FFMPEG 被拒用系统 ffmpeg；FK 轴向须实证（解剖学右=world -X=.L）；布尔 EXACT 空材质槽须 clear；改权重后须驱动渲染验证；KG 优先勿直读 JSON。",
+      "id": "overseer-wm-summary-001",
+      "name": "项目总管 T1 会话总结",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1088,6 +1112,15 @@
       "parent_element_id": "tech-insight-process-001",
       "view_id": "tech-insight-team-001",
       "view_name": "技术洞察团队"
+    },
+    {
+      "description": "项目总管 T1 工作记忆视图：单一会话总结元素，幂等覆盖。",
+      "parent_element_id": "project-overseer-001",
+      "view_id": "overseer-wm-001",
+      "view_name": "项目总管工作记忆",
+      "included_elements": [
+        "overseer-wm-summary-001"
+      ]
     }
   ]
 }
