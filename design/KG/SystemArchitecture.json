@@ -811,7 +811,13 @@
           "type": "Acceptance Test"
         }
       ],
-      "type": "Business Actor"
+      "type": "Business Actor",
+      "subdiagram_views": [
+        {
+          "view_id": "tech-report-writer-001-wm-001",
+          "view_name": "洞察报告撰写员-工作记忆"
+        }
+      ]
     },
     {
       "description": "aBot 技术洞察协作流程（雷达周期）：①负责人提出洞察主题/待评估技术清单（对齐 P2-P5）②雷达分析师扫描产出 blips（情报卡）③委员会评审（评估师 Adopt/Trial/Assess/Caution 四环判定）④关键候选交实验验证工程师 PoC/基准验证 ⑤报告撰写员整合成稿 ⑥负责人验收并交付项目总管、洞察登记入库。由 5 名团队成员角色承担（Assignment），Association 关联 aBot 愿景。",
@@ -881,6 +887,32 @@
       "description": "会话总结（2026-08-30）：aBot 数字孪生从占位人形演进为 chibi 机器人 + 组建协作团队 + 建立验收体系。目标：按参考图改造模型、驱动关键动作、组建技术洞察团队、规范多角色协作。关键进展：①模型 restyle 为 chibi 机器人（1.22m 金属红头盔/弯曲扫描线面罩/绿三角眼/分段机械臂/金底厚靴），两轮视觉差距修复（手/底座/面罩/靴/硬表面）；蒙皮改刚性按部件绑定（修复 bone-heat 漏权致抬臂拉伸）；9 关键动作烘焙为 joint-only 骨骼关键帧 Action 进 humanoid.blend，GUI 加载即播放可见。②动作 wave 举解剖学右臂(.L 链)/look 纯 yaw/nod 0.45，统一前相机 1280×1280 证据图。③团队：技术洞察 5 角色（负责人 qwen3.8-max、雷达分析师 qwen3.8-flash、评估师 qwen3.8-max、实验验证工程师 deepseek-v4-flash、报告撰写员 qwen3.8-flash）+ 协作流程 tech-insight-process-001（雷达周期六步，5 Assignment+Association→abot-vision）+ 视图 tech-insight-team-001。当前 8 个 Business Actor（项目总管/视觉分析员/机器人建模员/技术洞察5），每角色均有 opencode agent 与可执行验收测试（11 用例全通过）。关键决策：robot-modeler 定位主要建模 AGENT 职责泛化；多模态配 Qwen3.8（读图角色 flash、文本综合 max）；动作改烘焙进 blend。遗留：P2 物理→P3 感知→P4 智能大脑→P5 硬件对齐（下一步 P2 可委派技术洞察团队选型+实验验证）；旧 driven_*.png 可清理；新 agent 需重启 opencode 生效。经验：无头 timers 需手动 drive_once；FFMPEG 被拒用系统 ffmpeg；FK 轴向须实证（解剖学右=world -X=.L）；布尔 EXACT 空材质槽须 clear；改权重后须驱动渲染验证；KG 优先勿直读 JSON。",
       "id": "overseer-wm-summary-001",
       "name": "项目总管 T1 会话总结",
+      "type": "Business Object"
+    },
+    {
+      "id": "trw-wm-summary-001",
+      "name": "会话总结 2026-08-31 (P2物理引擎选型报告)",
+      "type": "Business Object",
+      "description": "T1会话总结（2026-08-31）：目标=整合素材A(雷达调研)+素材B(评估师四环)输出《人形机器人物理仿真引擎选型(P2)》中文洞察报告（对话内交付，未写文件，遵用户指令）。结论：MuJoCo=Adopt主引擎；Isaac Sim/PhysX5=Trial试点储备(P3/P4)；Newton/IsaacLab/Genesis/Webots系=Assess；PyBullet=Caution。建议路径：MuJoCo内核+Blender渲染+physics_adapter薄层，build_humanoid.py单一事实源双出口生成MJCF，简化碰撞原语，chibi配重。待验证：40%/12%/<5%接触误差数字需PoC复测、MJCF轴向映射、GPU档次门控Isaac试点、/state契约扩展走验收流程。6项PoC清单随报告交付。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T1"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "lastSummaryAt",
+          "value": "2026-08-31"
+        }
+      ]
+    },
+    {
+      "description": "aBot 技术洞察报告（2026-08-31，P2 物理与运动）：人形机器人物理仿真引擎选型。一句话结论：P2 采用 MuJoCo 作主物理内核（Adopt），Blender 保持渲染层，二者间加薄 physics_adapter 适配；NVIDIA Isaac Sim/PhysX 5 仅作有界试点（Trial）为 P3 感知/P4 智能储备；Newton、Isaac Lab、Genesis 列入跟踪评估（Assess）；Bullet/PyBullet 在人形步态/平衡明确回避（Caution）。候选对比：MuJoCo（DeepMind，Apache2.0，接触误差≈12%，headless/轻量/Python/MJCF，学术界标准）=Adopt；PhysX5/Isaac Sim6.0 GA（GPU 并行/照片级渲染/Newton experimental/SDG/ROS2，重且 GPU 依赖）=Trial；Isaac Lab3.0（Beta）=Assess；Newton v1.5（统一接口+MuJoCo Warp 后端，minor 有 breaking changes，跟踪至 2.x）=Assess；Genesis（证据薄）=Assess；Webots/Gazebo/CoppeliaSim（接触一般，P5 ROS 衔接再评）=Assess；Bullet/PyBullet（接触误差≈40% 单脚站抖）=Caution。建议路径：MuJoCo 物理内核+Blender 渲染层+physics_adapter（pose/motion/FK→qpos/ctrl，状态回灌 Blender）；单一事实源双出口（build_humanoid.py 程序化参数直接生成 MJCF，保持 .L=解剖学右=world -X、head local Y=竖直、面朝 -Y 约定）；碰撞用简化原语（capsule/box/sphere）；chibi 头重需显式配重。风险：误差数字待 PoC 复测（待验证）；MJCF 轴向映射错误难排查；chibi 质量属性缺失；GPU 档次未知（门控 Isaac 试点）；Newton/IsaacLab Beta。PoC 清单：POC-1 接触误差基准复测、POC-2 MJCF 生成+轴向断言、POC-3 physics_adapter 联通、POC-4 chibi 配重、POC-5 GPU 盘点+Isaac 试点评估、POC-6 Newton 跟踪。信源：DashScope WebSearch 检索（2026）+ tech-evaluator-001 四环判定 + tech-report-writer-001 整合。",
+      "id": "tech-insight-report-p2-physics-001",
+      "name": "技术洞察报告 P2 物理仿真选型 (2026-08-31)",
       "type": "Business Object"
     }
   ],
@@ -1016,7 +1048,8 @@
         "tech-validator-001",
         "tech-report-writer-001",
         "tech-insight-process-001",
-        "abot-vision-001"
+        "abot-vision-001",
+        "tech-insight-report-p2-physics-001"
       ],
       "included_relationships": [
         "1161",
@@ -1105,7 +1138,8 @@
         "tech-evaluator-001",
         "tech-validator-001",
         "tech-report-writer-001",
-        "tech-insight-process-001"
+        "tech-insight-process-001",
+        "tech-insight-report-p2-physics-001"
       ],
       "included_relationships": [
         "lead-assigned-to-insight-process",
@@ -1126,6 +1160,16 @@
       "included_elements": [
         "overseer-wm-summary-001"
       ]
+    },
+    {
+      "view_id": "tech-report-writer-001-wm-001",
+      "view_name": "洞察报告撰写员-工作记忆",
+      "description": "tech-report-writer-001 的 T1 工作记忆视图（会话总结，幂等覆写）。",
+      "parent_element_id": "tech-report-writer-001",
+      "included_elements": [
+        "trw-wm-summary-001"
+      ],
+      "included_relationships": []
     }
   ]
 }
