@@ -845,7 +845,14 @@
       "description": "会话记录（2026-08-30，技术洞察团队）：应人类伙伴要求并经业界选型（ThoughtWorks Technology Radar 四象限四环 + CTI 情报侦察 + 验证驱动选型 + IPD 技术预研），组建技术洞察团队：负责人（tech-insight-lead-001, qwen3.8-max）、雷达分析师（tech-radar-analyst-001, qwen3.8-flash 多模态）、评估师（tech-evaluator-001, qwen3.8-max）、实验验证工程师（tech-validator-001, deepseek-v4-flash）、报告撰写员（tech-report-writer-001, qwen3.8-flash）。协作流程 Business Process tech-insight-process-001（雷达周期六步），5 Assignment 关系 + Association 到 abot-vision-001，团队视图 tech-insight-team-001。为每角色创建 opencode agent（.opencode/agent/tech-*.md）与可执行验收测试，11/11 通过，校验通过。业界调研用 DashScope WebSearch MCP（bl search web，default 身份）。",
       "id": "session-summary-2026-08-30-tech-insight-team",
       "name": "会话记录 2026-08-30 (技术洞察团队)",
-      "type": "Business Object"
+      "type": "Business Object",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "5462eea",
+          "description": "Session record registered into overseer LTM; files: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
