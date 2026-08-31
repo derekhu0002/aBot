@@ -979,6 +979,11 @@
         {
           "name": "file_paths",
           "value": "docs/booklist-robot-ai/robot-ai-kids-booklist.wechat.md"
+        },
+        {
+          "name": "commit",
+          "value": "0f99109",
+          "description": "Landing page with per-book JD affiliate links added; files: docs/booklist-robot-ai/landing.html"
         }
       ]
     }
