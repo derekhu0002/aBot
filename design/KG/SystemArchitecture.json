@@ -956,7 +956,14 @@
       "description": "会话记录（2026-08-31，亲子共学）：人类伙伴宣布与 8 岁孩子一起做 aBot 项目，作为孩子学习对象，亲子共同探索，孩子兴趣=机器人动作/运动。据此登记子目标 abot-kids-learning-001（Goal，Association→abot-vision-001）与儿童动作探索手册 docs/learning/robot-motion-explore.md（中文亲子共读：骨骼/关节/动作概念、9 动作清单、Blender 播放操作步骤、5 个探索任务卡+星星奖励），验收用例 abot-kids-learning-guide-present（tests/acceptance/test_kids_learning_guide.py），12/12 测试通过。设计要点：任务卡只观察/播放不改代码；孩子操作依赖既有烘焙 Action（GUI 即播），无需编程。",
       "id": "session-summary-2026-08-31-kids-learning",
       "name": "会话记录 2026-08-31 (亲子共学学习目标)",
-      "type": "Business Object"
+      "type": "Business Object",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "cd5de2f",
+          "description": "Session record registered into overseer LTM; files: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
