@@ -632,6 +632,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: .opencode/agent/tech-insight-lead.md, tests/acceptance/test_tech_insight_lead.py"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/tech-insight-lead.md; tests/acceptance/test_tech_insight_lead.py"
         }
       ],
       "description": "aBot 技术洞察团队负责人（TAB 主席）：确定洞察主题与优先级（对齐路线图 P2-P5）、组织委员会评审（Adopt/Trial/Assess/Caution）、验收洞察报告并交付项目总管。模型 alibaba-cn/qwen3.8-max。对应 opencode agent 'tech-insight-lead'（.opencode/agent/tech-insight-lead.md）。稳定身份 tech-insight-lead-001。",
@@ -661,6 +670,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: .opencode/agent/tech-radar-analyst.md, tests/acceptance/test_tech_radar_analyst.py"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/tech-radar-analyst.md; tests/acceptance/test_tech_radar_analyst.py"
         }
       ],
       "description": "aBot 技术洞察团队雷达分析师（CTI 情报侦察）：四象限（技术/平台/工具/语言框架）扫描机器人物理/感知/智能/平台生态，产出 blip 技术情报卡（含成熟度/信源/证据）。多模态模型 alibaba-cn/qwen3.8-flash。对应 opencode agent 'tech-radar-analyst'（.opencode/agent/tech-radar-analyst.md）。稳定身份 tech-radar-analyst-001。",
@@ -690,6 +708,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: .opencode/agent/tech-evaluator.md, tests/acceptance/test_tech_evaluator.py"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/tech-evaluator.md; tests/acceptance/test_tech_evaluator.py"
         }
       ],
       "description": "aBot 技术洞察团队评估师（TAB 评审委员）：对技术情报卡做 Adopt/Trial/Assess/Caution 判定并给出理由与架构影响评估。模型 alibaba-cn/qwen3.8-max。对应 opencode agent 'tech-evaluator'（.opencode/agent/tech-evaluator.md）。稳定身份 tech-evaluator-001。",
@@ -719,6 +746,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: .opencode/agent/tech-validator.md, tests/acceptance/test_tech_validator.py"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/tech-validator.md; tests/acceptance/test_tech_validator.py"
         }
       ],
       "description": "aBot 技术洞察团队实验验证工程师（预研验证）：用代码/脚本对关键候选技术做 PoC、基准测试与复现，产出可执行证据，验证驱动选型。模型 deepseek/deepseek-v4-flash。对应 opencode agent 'tech-validator'（.opencode/agent/tech-validator.md）。稳定身份 tech-validator-001。",
@@ -748,6 +784,15 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: .opencode/agent/tech-report-writer.md, tests/acceptance/test_tech_report_writer.py"
+        },
+        {
+          "name": "file_paths",
+          "value": ".opencode/agent/tech-report-writer.md; tests/acceptance/test_tech_report_writer.py"
         }
       ],
       "description": "aBot 技术洞察团队报告撰写员：整合 blips+评估+验证为结构化中文洞察报告与技术路线图建议，交付项目总管。多模态模型 alibaba-cn/qwen3.8-flash。对应 opencode agent 'tech-report-writer'（.opencode/agent/tech-report-writer.md）。稳定身份 tech-report-writer-001。",
@@ -788,6 +833,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "8da9d63",
+          "description": "Tech-insight team creation; files: tests/acceptance/test_tech_insight_process.py"
         }
       ]
     }
