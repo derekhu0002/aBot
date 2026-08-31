@@ -931,6 +931,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "d762ec7",
+          "description": "Kids-learning goal + motion-exploration guide + acceptance test; files: docs/learning/robot-motion-explore.md, tests/acceptance/test_kids_learning_guide.py"
         }
       ],
       "description": "aBot 子目标（2026-08-31 人类伙伴确认）：aBot 项目作为 8 岁孩子的学习对象，亲子共同探索。孩子兴趣=机器人动作/运动。低门槛入口：①Blender GUI 播放 9 个烘焙动作并观察骨骼/关节如何让机器人动 ②儿童动作探索手册 docs/learning/robot-motion-explore.md（中文、亲子共读：什么是骨骼/关节/动作、9 动作清单、操作步骤、5 个探索任务卡）③游戏化任务（观察 wave 举哪只手、比较 walk/run 等）。验收：手册存在且覆盖 9 动作与操作步骤；任务卡可在家长陪同下完成。",
