@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "twin-control": {
+      "type": "local",
+      "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
+      "enabled": true
+    }
+  }
+}

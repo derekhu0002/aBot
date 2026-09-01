@@ -213,7 +213,7 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）。",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。2026-09-01 阶段② MCP Server：twin_mcp_server.py 将 twin_client 封装为 FastMCP(stdio) 本地 MCP 'twin-control'（登记于项目级 opencode.json，重启 opencode 生效；前置需 twin_server 运行），工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，校验 pose/motion/骨名与 duration，fk 默认弧度（twin_client 契约，degrees=True 自动换算），twin_server 未运行时各工具返回含启动命令的 ok=false 错误而不崩溃，set_client/create_server(client=...) 注入 client 可测，TWIN_HOST/TWIN_PORT 环境变量覆盖端点。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py, twin_mcp_server.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）、tests/acceptance/test_twin_mcp_server.py（MCP Server 契约）。",
       "attributes": [
         {
           "name": "commit",
@@ -272,6 +272,13 @@
           "acceptanceCriteria": "tests/acceptance/test_keyboard_control.py",
           "description": "GIVEN 仓库含 scripts/blender_humanoid/keyboard_control.py（带 `if __name__ == \"__main__\"` 保护，import 不启动监听循环）WHEN 在无 Blender/GUI/网络环境下导入模块并对每个约定按键调用 key_to_command，再经桩客户端分发命令 THEN 每个文档化按键映射为精确 twin 命令（空格=(motion,idle,3.0)、1=(pose,relax)、2=(pose,tpose)、3=(pose,apose)、4=(motion,wave,3.0)、5=(motion,nod,3.0)、6=(motion,look,3.0)、7=(motion,walk,6.0)、8=(motion,run,6.0)、9=(pose,apose)、0=(stop)、h=(help)、q=(quit)），字母键大小写不敏感，未知键返回 None，帮助屏含且仅含 KEY_MAP 全部按键（帮助与映射一致），且 dispatch_command 对桩客户端正确调用 set_pose / start_motion(name,duration) / stop（外部视角、无需网络与运行中的 twin_server）。",
           "name": "twin-control-keyboard-entry-mapping",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/twin_mcp_server.py",
+          "acceptanceCriteria": "tests/acceptance/test_twin_mcp_server.py",
+          "description": "GIVEN 仓库含 scripts/blender_humanoid/twin_mcp_server.py（FastMCP stdio 封装 twin_client，set_client/create_server(client=...) 可注入 client，带 `if __name__ == \"__main__\"` 保护，import 不启动 stdio 服务）WHEN 在无 Blender/GUI/网络环境下导入模块并注入桩 client，经 FastMCP 面列出工具、直接及经 mcp.call_tool 调用各工具 handler THEN 工具集恰为 {pose, motion, fk, stop, state, health} 且均带 Agent 可读 description，各 handler 正确转发 twin_client 契约（pose('relax')→set_pose('relax')；motion('walk',5)→start_motion('walk',5.0)；fk('head',x,y,z)→drive_bones({'head':[x,y,z]}) 弧度契约、degrees=True 换算为弧度；stop()→stop()；state() 回读模型状态；health() 回读可达性与模型信息），非法 pose/动作名/骨名或 duration≤0 返回清晰 ok=false 错误且不调用 client，client 失败被转换为含启动命令（blender --python scripts/blender_humanoid/twin_server.py）的 ok=false 错误而不崩溃，端点支持 TWIN_HOST/TWIN_PORT 环境变量覆盖（默认 127.0.0.1:8123）——外部视角、无网络、无 GUI。",
+          "name": "twin-control-mcp-server-contract",
           "type": "Acceptance Test"
         }
       ]
@@ -1040,7 +1047,7 @@
       "type": "Business Object"
     },
     {
-      "description": "aBot 开发过程（2026-09-01 人类伙伴确认，三阶段递进，全程契约不变后端扩三）：①数字孪生（当前）：Blender 程序化角色（P0 完成）+ 动作控制接口 twin-control（P1 完成 pose/motion/FK/state）+ 键盘控制入口（2026-09-01 完成：keyboard_control.py 将键盘→twin_client 基本动作控制入口以纯函数映射 + 标准库监听循环实现，目标=键盘可控制机器人基本动作，验收 tests/acceptance/test_keyboard_control.py）。②MCP 接口：将 twin-control 接口封装为 MCP Server（pose/motion/FK/state 工具集），让 Agent 通过 MCP 调用接口，实现 Agent 对数字孪生角色的控制（对齐 P4 智能大脑前置）。③真实物理 ROBOT：组装真实桌面人形机器人（参考 tech-insight-report-desktop-humanoid-001：SG90→STS3215/Dynamixel、PCA9685、PC 外挂主控）+ MCP 接口；Agent 运行在电脑上，通过同一 MCP 契约控制真机（hardware_adapter 后端）。",
+      "description": "aBot 开发过程（2026-09-01 人类伙伴确认，三阶段递进，全程契约不变后端扩三）：①数字孪生（当前）：Blender 程序化角色（P0 完成）+ 动作控制接口 twin-control（P1 完成 pose/motion/FK/state）+ 键盘控制入口（2026-09-01 完成：keyboard_control.py 将键盘→twin_client 基本动作控制入口以纯函数映射 + 标准库监听循环实现，目标=键盘可控制机器人基本动作，验收 tests/acceptance/test_keyboard_control.py）。②MCP 接口（2026-09-01 已实现）：twin_mcp_server.py 将 twin-control 封装为 FastMCP(stdio) 本地 MCP Server 'twin-control'（工具集 pose/motion/fk/stop/state/health），登记于项目级 opencode.json，待重启 opencode 生效，前置需 twin_server 运行（blender --python scripts/blender_humanoid/twin_server.py）；Agent 通过 MCP 调用接口，实现 Agent 对数字孪生角色的控制（对齐 P4 智能大脑前置；验收 tests/acceptance/test_twin_mcp_server.py）。③真实物理 ROBOT：组装真实桌面人形机器人（参考 tech-insight-report-desktop-humanoid-001：SG90→STS3215/Dynamixel、PCA9685、PC 外挂主控）+ MCP 接口；Agent 运行在电脑上，通过同一 MCP 契约控制真机（hardware_adapter 后端）。",
       "id": "abot-dev-process-001",
       "name": "aBot 开发过程：数字孪生→MCP→真实机器人",
       "testcases": [
