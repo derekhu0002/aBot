@@ -1171,6 +1171,23 @@
         }
       ],
       "type": "Business Actor"
+    },
+    {
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "0f26067",
+          "description": "Project README added for publishing; files: README.md"
+        },
+        {
+          "name": "file_paths",
+          "value": "README.md"
+        }
+      ],
+      "description": "aBot 项目 README（2026-09-01，发布用）：北极星=开发人形机器人，Blender 数字孪生先行探索运动控制/感知/LLM 智能；亲子共学。方案=单一事实源+契约不变后端扩三（Blender/MuJoCo/真机）；三阶段开发过程（数字孪生→MCP→真实 ROBOT）+ 路线 P0-P5。当前状态：chibi 孪生/9 动作/键盘控制/MCP 接口/aBot 人格/AI 团队。含快速开始、目录结构、验收体系、AI 辅助方式、路线图。全文存于仓库 README.md。",
+      "id": "abot-readme-001",
+      "name": "aBot 项目 README",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1512,7 +1529,8 @@
         "twin-control-001",
         "humanoid-model-001",
         "abot-dev-process-001",
-        "abot-robot-001"
+        "abot-robot-001",
+        "abot-readme-001"
       ],
       "included_relationships": [
         "dev-process-relates-vision",
