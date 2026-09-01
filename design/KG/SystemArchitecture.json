@@ -1303,6 +1303,12 @@
       "id": "tech-insight-report-desktop-humanoid-assembly-001",
       "name": "技术洞察报告 桌面人形物理组装方案与BOM (2026-09-01)",
       "type": "Business Object"
+    },
+    {
+      "description": "里程碑记录（2026-09-01，物理组装方案）：完成桌面小型人形机器人物理组装技术方案与材料选型（BOM）洞察报告 tech-insight-report-desktop-humanoid-assembly-001（基于评估意见 tech-eval-desktop-humanoid-assembly-001）。结论：12-DOF 上半身坐姿基线（头2+双臂5×2），STS3215 串行总线舵机 Step1 主选/Dynamixel 终态，PLA+PETG 打印+625ZZ+M3，USB-TTL 总线+PC 外挂主控，独立 12V 电源+UBEC 共地；BOM 约 ¥1500-2200；组装六步（契约先行→单舵机台架→头→双臂→躯干→全身标定+急停）；twin-control 契约不变扩 hardware_adapter；19骨→12驱动映射+标定表；7/9 动作真机可复现。待拍板：形态（首要）、walk/run 降级、Step0、夹爪、移动底座。PoC P1-P7 移交实验验证工程师。报告登记于 tech-insight-reports-001。",
+      "id": "session-summary-2026-09-01-assembly-bom",
+      "name": "里程碑 2026-09-01 (物理组装方案与BOM)",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1549,7 +1555,8 @@
         "session-summary-2026-08-30-key-actions",
         "session-summary-2026-08-30-tech-insight-team",
         "session-summary-2026-08-31-kids-learning",
-        "session-summary-2026-09-01-phase"
+        "session-summary-2026-09-01-phase",
+        "session-summary-2026-09-01-assembly-bom"
       ],
       "included_relationships": [
         "humanoid-model-serves-abot-vision",
