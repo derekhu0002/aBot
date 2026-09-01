@@ -250,10 +250,6 @@
           "description": "baked-Action playback contract in test_humanoid_actions.py (Part B, no-driver frame evaluation); files: tests/acceptance/test_humanoid_actions.py, tests/acceptance/test_humanoid_build.py"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "71fb109",
           "description": "keyboard control entry: key_to_command pure mapping + stdlib key listener (msvcrt/termios) + health precheck with connection-failure guidance + mapping contract acceptance test; files: scripts/blender_humanoid/keyboard_control.py, tests/acceptance/test_keyboard_control.py"
@@ -262,6 +258,10 @@
           "name": "commit",
           "value": "9990004",
           "description": "stage2: twin-control MCP server (FastMCP stdio, pose/motion/fk/stop/state/health) + acceptance test + opencode.json registration + graph testcase/description; files: scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_twin_mcp_server.py, opencode.json"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -1067,10 +1067,6 @@
       "type": "Business Process",
       "attributes": [
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "3c786ef",
           "description": "3-stage dev process registered + sub-view abot-development-001 + acceptance test; files: tests/acceptance/test_abot_dev_process.py"
@@ -1088,6 +1084,10 @@
           "name": "commit",
           "value": "9990004",
           "description": "stage ② MCP server implemented + registered in opencode.json (restart opencode to activate; needs running twin_server); files: scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_twin_mcp_server.py, opencode.json"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ]
     },
@@ -1137,6 +1137,35 @@
       "id": "rm-mem-20260901-twin-mcp-server",
       "name": "建模记忆 2026-09-01 (stage2 twin-control MCP server)",
       "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "agent",
+          "value": "abot"
+        },
+        {
+          "name": "model",
+          "value": "alibaba-cn/qwen3.8-max"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        }
+      ],
+      "description": "aBot 机器人本体：桌面级 chibi 人形机器人（数字孪生=身体，humanoid.blend 19 骨/9 动作）。人格 Agent 'abot'（.opencode/agent/abot.md，mode=primary），用户可直接与其对话，像朋友一样聊天、让它动起来。它通过 twin-control MCP 控制身体（motion/pose/fk/state/stop/health）。模型 alibaba-cn/qwen3.8-max。稳定身份 abot-robot-001。",
+      "id": "abot-robot-001",
+      "name": "aBot 机器人本体（数字孪生）",
+      "testcases": [
+        {
+          "Input": "aBot 意图图 abot-robot-001 元素 + 仓库 .opencode/agent/abot.md",
+          "acceptanceCriteria": "tests/acceptance/test_abot_robot.py",
+          "description": "GIVEN 意图图含 aBot 机器人本体 Actor 且仓库含人格 agent 定义 WHEN 校验一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=abot、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/abot.md 存在、frontmatter model 一致、mode=primary、人格定义引用数字孪生身体（humanoid.blend）与 twin-control。",
+          "name": "abot-robot-actor-opencode-agent-consistency",
+          "type": "Acceptance Test"
+        }
+      ],
+      "type": "Business Actor"
     }
   ],
   "relationships": [
@@ -1268,6 +1297,26 @@
       "statement": "aBot 开发过程：数字孪生→MCP→真实机器人 --(Association)--> Humanoid Character Model (Blender)",
       "target_id": "humanoid-model-001",
       "target_name": "Humanoid Character Model (Blender)",
+      "type": "Association"
+    },
+    {
+      "id": "abot-robot-embodies-model",
+      "name": "aBot 本体以数字孪生为身体",
+      "source_id": "abot-robot-001",
+      "source_name": "aBot 机器人本体（数字孪生）",
+      "statement": "aBot 机器人本体（数字孪生） --(Association)--> Humanoid Character Model (Blender)",
+      "target_id": "humanoid-model-001",
+      "target_name": "Humanoid Character Model (Blender)",
+      "type": "Association"
+    },
+    {
+      "id": "abot-robot-controls-via-twin-control",
+      "name": "aBot 本体通过操控服务控制身体",
+      "source_id": "abot-robot-001",
+      "source_name": "aBot 机器人本体（数字孪生）",
+      "statement": "aBot 机器人本体（数字孪生） --(Association)--> 数字孪生本地操控服务 (Twin Control)",
+      "target_id": "twin-control-001",
+      "target_name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Association"
     }
   ],
@@ -1457,12 +1506,15 @@
         "abot-vision-001",
         "twin-control-001",
         "humanoid-model-001",
-        "abot-dev-process-001"
+        "abot-dev-process-001",
+        "abot-robot-001"
       ],
       "included_relationships": [
         "dev-process-relates-vision",
         "dev-process-relates-twin-control",
-        "dev-process-relates-humanoid-model"
+        "dev-process-relates-humanoid-model",
+        "abot-robot-embodies-model",
+        "abot-robot-controls-via-twin-control"
       ],
       "parent_element_id": "abot-vision-001",
       "view_id": "abot-development-001",
