@@ -560,7 +560,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-08-30，烘焙 Actions 轮）：目标=修复 Blender GUI 加载 humanoid.blend 按播放看不到动作的问题（把 9 关键动作烘焙为 .blend 内命名关节旋转 Action）。完成：build_humanoid.py 新增 bake_actions（ActionRelax..ActionRun，纯骨骼 rotation 关键帧 + walk/run root 起伏，时长取动作周期整数倍保证无缝循环，ActionIdle 默认绑定、GUI 即播）；humanoid_control 新增 ACTION_SPECS/MOTION_DRIVERS 契约并在 load_humanoid 解绑活动 Action 以保护运行时 FK 驱动链；再生 blend + 重渲 9 证据图（ACTION_FACTS 与上轮一致）；test_humanoid_actions.py 新增 Part B（无驱动打开即播、逐帧断言关节随时间变化且符合契约），test_humanoid_build.py 扩展为含 9 个 joint-only Action 断言；5 测试 + validateSystemArchitecture 全过。commit：d306076（脚本）/ c3daae7（blend+证据）/ 64eefa6（测试），已登记于 twin-control-001/humanoid-build-001/humanoid-model-001。关键决策：烘焙复用 humanoid_control 驱动参数（同一套 FK 契约、单一事实源）；不用 NLA strips 而用 fake_user + ActionIdle 默认绑定（Action Editor 下拉切换最简）。遗留：无阻断项。经验：Blender 5.1 slotted Action 须 channelbag 访问 F-curve；预览渲染前须解绑 Action 才得中性姿势；Blender 状态输出会粘在 JSON 行后用 raw_decode。",
+      "description": "会话总结（2026-09-01）：目标=实现 aBot 开发过程（abot-dev-process-001）阶段①待办：键盘→twin_client 基本动作控制入口。完成：scripts/blender_humanoid/keyboard_control.py——key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；walk/run 6s 其余 3s），KEY_MAP 单一事实源生成帮助屏；dispatch_command(client,command) 注入客户端可测；标准库键盘监听（Windows msvcrt / POSIX termios+tty.setcbreak，非 TTY 回退 readline）；启动 health 预检，连接失败给出『blender --python scripts/blender_humanoid/twin_server.py』提示并码 1 退出。验收 test_keyboard_control.py（纯映射+桩客户端，无网络）登记为 twin-control-001 用例 twin-control-keyboard-entry-mapping；abot-dev-process-001 阶段①键盘入口标记完成。14 验收测试全过 + validate 过；commits 71fb109（代码+测试）/1b57425（图登记）。关键决策：twin_client 延迟 import 保映射层纯函数零依赖；POSIX 用 setcbreak 保留 Ctrl+C。经验：ARGO updateElement 的 description/testcases 必须放 patch 内，放 mutation 顶层被静默忽略。遗留/下一步：阶段②将 twin-control 封装为 MCP Server（pose/motion/FK/state 工具集）未开始；真机联动验证需先启动 twin_server（GUI Blender）后跑 keyboard_control.py 人工确认。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -572,7 +572,7 @@
         },
         {
           "name": "lastSummaryAt",
-          "value": "2026-08-30"
+          "value": "2026-09-01"
         }
       ]
     },
@@ -1073,6 +1073,32 @@
           "value": "scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
         }
       ]
+    },
+    {
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "description": "keyboard control entry code + acceptance test",
+          "name": "commit",
+          "value": "71fb109"
+        },
+        {
+          "description": "graph registration: testcase on twin-control-001 + stage① done on abot-dev-process-001",
+          "name": "commit",
+          "value": "1b57425"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
+        }
+      ],
+      "description": "会话记录（2026-09-01，机器人3D建模员）：实现 abot-dev-process-001 阶段①待办『键盘→twin_client 基本动作控制入口』。交付：scripts/blender_humanoid/keyboard_control.py——key_to_command(key)->(type,args) 纯函数映射（空格=idle(3s)、1=relax、2=tpose、3=apose、4=wave(3s)、5=nod(3s)、6=look(3s)、7=walk(6s)、8=run(6s)、9=apose、0=stop、h=帮助、q=退出；字母键大小写不敏感、未知键 None）；KEY_MAP 为单一事实源，帮助屏 help_text() 由其生成（永不漂移）；dispatch_command(client,command) 注入客户端可测（返回 ok/ help/ quit）；标准库监听（Windows msvcrt.getwch 并吞特殊键；POSIX termios+tty.setcbreak 保留 Ctrl+C，非 TTY 回退 readline，EOF→q）；启动 health 预检，连接失败打印『blender --python scripts/blender_humanoid/twin_server.py』启动提示并以码 1 退出；逐键异常捕获不崩循环。验收：tests/acceptance/test_keyboard_control.py（纯映射全表 + 大小写 + 未知键 + 帮助屏与映射一致 + 桩客户端 dispatch，无网络无 GUI），登记为 twin-control-001 用例 twin-control-keyboard-entry-mapping；abot-dev-process-001 描述标记阶段①键盘入口完成（保留关键词通过其验收）。回归：14 个验收测试全过 + validateSystemArchitecture 过。关键决策：①walk/run 时长 6s 其余 3s（移动动作需更长观察窗口）；②twin_client 在 main() 内延迟 import，映射层零依赖、任何环境可导入测试；③POSIX 用 setcbreak 而非 raw（保留 Ctrl+C）。坑：ARGO updateElement 变更必须把 description/testcases 放进 patch 对象内；放在 mutation 顶层会被静默忽略（首次 apply 只生效了 attributes，靠事后核验发现并补做）。",
+      "id": "rm-mem-20260901-keyboard-control",
+      "name": "建模记忆 2026-09-01 (keyboard control entry)",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1308,7 +1334,8 @@
         "rm-mem-20260830-gapfixes-round2",
         "rm-mem-20260830-action-evidence",
         "rm-mem-20260830-action-axis-fix",
-        "rm-mem-20260830-baked-actions"
+        "rm-mem-20260830-baked-actions",
+        "rm-mem-20260901-keyboard-control"
       ],
       "included_relationships": []
     },
