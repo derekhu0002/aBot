@@ -1188,6 +1188,27 @@
       "id": "abot-readme-001",
       "name": "aBot 项目 README",
       "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "17176b9",
+          "description": "WeChat project-retro draft + images + test; files: docs/abot-project-retro.wechat.md, docs/images/abot-*.png, tests/wechat-article.test.js"
+        },
+        {
+          "name": "deploy_url",
+          "value": "https://github.com/derekhu0002/aBot"
+        },
+        {
+          "name": "file_paths",
+          "value": "docs/abot-project-retro.wechat.md"
+        }
+      ],
+      "description": "公众号草稿（2026-09-01）：《aBot 项目总结：从数字孪生到 AI 辅助开发》——与项目总结邮件同内容，含 GitHub 开源介绍（https://github.com/derekhu0002/aBot，阅读原文指向该地址）、两大主题（ROBOT 项目本身 + AI 辅助开发）、路线图/时间线/AI 角色表、6 张机器人配图。media_id=BRZAMZ3b-CaOBH8qdG2KTTSzPrEyGfa_7Mrb7t7Y7uS1kOXcjLcNm-ec4KTKekZd；个人未认证订阅号需后台手动发布。",
+      "id": "wechat-draft-abot-project-retro-001",
+      "name": "公众号草稿：aBot 项目总结",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1530,7 +1551,8 @@
         "humanoid-model-001",
         "abot-dev-process-001",
         "abot-robot-001",
-        "abot-readme-001"
+        "abot-readme-001",
+        "wechat-draft-abot-project-retro-001"
       ],
       "included_relationships": [
         "dev-process-relates-vision",
