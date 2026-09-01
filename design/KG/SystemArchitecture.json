@@ -1151,6 +1151,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "17c9e75",
+          "description": "aBot persona primary agent + Business Actor + acceptance test; files: .opencode/agent/abot.md, tests/acceptance/test_abot_robot.py"
         }
       ],
       "description": "aBot 机器人本体：桌面级 chibi 人形机器人（数字孪生=身体，humanoid.blend 19 骨/9 动作）。人格 Agent 'abot'（.opencode/agent/abot.md，mode=primary），用户可直接与其对话，像朋友一样聊天、让它动起来。它通过 twin-control MCP 控制身体（motion/pose/fk/state/stop/health）。模型 alibaba-cn/qwen3.8-max。稳定身份 abot-robot-001。",
