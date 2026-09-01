@@ -1219,7 +1219,14 @@
       "description": "阶段总结（2026-09-01）：aBot 从数字孪生到可交互+AI 辅助+发布。核心成果：chibi 孪生（9 动作烘焙 GUI 即播）、键盘控制、twin-control MCP Server、aBot 人格 Agent；8 个 Business Actor 多角色 AI 团队（意图图 16 验收用例全绿）；两项技术洞察（MuJoCo=Adopt、桌面人形四阶段）；发布物（README、项目总结邮件+公众号草稿、书单推广邮件/公众号/落地页已部署、GitHub 开源 https://github.com/derekhu0002/aBot）。关键决策：契约不变后端扩三、单一事实源、三阶段开发过程、LLM 白名单+安全联锁、多模态 Qwen3.8、亲子共学。遗留：push GitHub、公众号手动发布、P2 MuJoCo、阶段③真机、书单2本链接待补。",
       "id": "session-summary-2026-09-01-phase",
       "name": "阶段总结 2026-09-01 (数字孪生→AI辅助→发布)",
-      "type": "Business Object"
+      "type": "Business Object",
+      "attributes": [
+        {
+          "name": "commit",
+          "value": "44e9f23",
+          "description": "Phase summary registered into overseer LTM; files: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
