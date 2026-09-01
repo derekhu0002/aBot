@@ -1335,6 +1335,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "0827428",
+          "description": "P2 physics breakdown plan + acceptance test; files: tests/acceptance/test_p2_physics_plan.py"
         }
       ]
     }
