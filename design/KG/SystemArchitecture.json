@@ -237,7 +237,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py"
         },
         {
           "name": "commit",
@@ -257,6 +257,11 @@
           "name": "commit",
           "value": "71fb109",
           "description": "keyboard control entry: key_to_command pure mapping + stdlib key listener (msvcrt/termios) + health precheck with connection-failure guidance + mapping contract acceptance test; files: scripts/blender_humanoid/keyboard_control.py, tests/acceptance/test_keyboard_control.py"
+        },
+        {
+          "name": "commit",
+          "value": "9990004",
+          "description": "stage2: twin-control MCP server (FastMCP stdio, pose/motion/fk/stop/state/health) + acceptance test + opencode.json registration + graph testcase/description; files: scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_twin_mcp_server.py, opencode.json"
         }
       ],
       "testcases": [
@@ -567,7 +572,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-09-01）：目标=实现 aBot 开发过程（abot-dev-process-001）阶段①待办：键盘→twin_client 基本动作控制入口。完成：scripts/blender_humanoid/keyboard_control.py——key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；walk/run 6s 其余 3s），KEY_MAP 单一事实源生成帮助屏；dispatch_command(client,command) 注入客户端可测；标准库键盘监听（Windows msvcrt / POSIX termios+tty.setcbreak，非 TTY 回退 readline）；启动 health 预检，连接失败给出『blender --python scripts/blender_humanoid/twin_server.py』提示并码 1 退出。验收 test_keyboard_control.py（纯映射+桩客户端，无网络）登记为 twin-control-001 用例 twin-control-keyboard-entry-mapping；abot-dev-process-001 阶段①键盘入口标记完成。14 验收测试全过 + validate 过；commits 71fb109（代码+测试）/1b57425（图登记）。关键决策：twin_client 延迟 import 保映射层纯函数零依赖；POSIX 用 setcbreak 保留 Ctrl+C。经验：ARGO updateElement 的 description/testcases 必须放 patch 内，放 mutation 顶层被静默忽略。遗留/下一步：阶段②将 twin-control 封装为 MCP Server（pose/motion/FK/state 工具集）未开始；真机联动验证需先启动 twin_server（GUI Blender）后跑 keyboard_control.py 人工确认。",
+      "description": "会话总结（2026-09-01 第二会话）：目标=abot-dev-process-001 阶段②把 twin-control 封装为 MCP Server。完成：scripts/blender_humanoid/twin_mcp_server.py——FastMCP(stdio) 封装 twin_client，工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，全部带 Agent 可读 description；校验 pose/motion/骨名/参数（非法→清晰 ok=false 错误且不调 client）；fk 默认弧度（twin_client 契约），degrees=True 自动换算；twin_server 未运行→ok=false+启动命令提示不崩溃；set_client/create_server(client=...) 注入 client 可测；TWIN_HOST/TWIN_PORT 环境变量覆盖端点；项目级 opencode.json 登记本地 MCP 'twin-control'（重启 opencode 生效）。验收 test_twin_mcp_server.py（stub 转发+校验+容错+call_tool 走线+env 端点，无网络无 GUI）登记为 twin-control-001 用例 twin-control-mcp-server-contract；abot-dev-process-001 描述标记阶段②已实现（含待重启+需 twin_server 运行）。15 验收测试全过 + validate 过；commit 9990004（代码+测试+opencode.json+图 testcase/描述）。关键决策：①pose 也严格校验（'wave' 是动作非姿势，转发契约测试例用 pose('relax')→set_pose('relax')）；②handler 为模块级纯函数，create_server 用 mcp.tool()(fn) 注册（本版本 FastMCP.tool() 第一位置参数是 name 而非函数——坑）；③get_client 懒构造且调用时读 env，导入零副作用；④工具统一返回 {ok,...} 字典，错误带 hint。遗留/下一步：重启 opencode 后在 twin_server（GUI Blender）运行下端到端验证 twin-control 工具；阶段③真机（同契约换 hardware_adapter）。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -1077,7 +1082,12 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
+          "value": "scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; opencode.json"
+        },
+        {
+          "name": "commit",
+          "value": "9990004",
+          "description": "stage ② MCP server implemented + registered in opencode.json (restart opencode to activate; needs running twin_server); files: scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_twin_mcp_server.py, opencode.json"
         }
       ]
     },
@@ -1105,6 +1115,27 @@
       "description": "会话记录（2026-09-01，机器人3D建模员）：实现 abot-dev-process-001 阶段①待办『键盘→twin_client 基本动作控制入口』。交付：scripts/blender_humanoid/keyboard_control.py——key_to_command(key)->(type,args) 纯函数映射（空格=idle(3s)、1=relax、2=tpose、3=apose、4=wave(3s)、5=nod(3s)、6=look(3s)、7=walk(6s)、8=run(6s)、9=apose、0=stop、h=帮助、q=退出；字母键大小写不敏感、未知键 None）；KEY_MAP 为单一事实源，帮助屏 help_text() 由其生成（永不漂移）；dispatch_command(client,command) 注入客户端可测（返回 ok/ help/ quit）；标准库监听（Windows msvcrt.getwch 并吞特殊键；POSIX termios+tty.setcbreak 保留 Ctrl+C，非 TTY 回退 readline，EOF→q）；启动 health 预检，连接失败打印『blender --python scripts/blender_humanoid/twin_server.py』启动提示并以码 1 退出；逐键异常捕获不崩循环。验收：tests/acceptance/test_keyboard_control.py（纯映射全表 + 大小写 + 未知键 + 帮助屏与映射一致 + 桩客户端 dispatch，无网络无 GUI），登记为 twin-control-001 用例 twin-control-keyboard-entry-mapping；abot-dev-process-001 描述标记阶段①键盘入口完成（保留关键词通过其验收）。回归：14 个验收测试全过 + validateSystemArchitecture 过。关键决策：①walk/run 时长 6s 其余 3s（移动动作需更长观察窗口）；②twin_client 在 main() 内延迟 import，映射层零依赖、任何环境可导入测试；③POSIX 用 setcbreak 而非 raw（保留 Ctrl+C）。坑：ARGO updateElement 变更必须把 description/testcases 放进 patch 对象内；放在 mutation 顶层会被静默忽略（首次 apply 只生效了 attributes，靠事后核验发现并补做）。",
       "id": "rm-mem-20260901-keyboard-control",
       "name": "建模记忆 2026-09-01 (keyboard control entry)",
+      "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "description": "stage2 MCP server code + acceptance test + opencode.json + graph registration",
+          "name": "commit",
+          "value": "9990004"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; opencode.json"
+        }
+      ],
+      "description": "阶段② twin-control MCP Server（2026-09-01）：scripts/blender_humanoid/twin_mcp_server.py = FastMCP(stdio) 封装 twin_client；工具 pose(name) relax|tpose|apose / motion(name,duration) idle|wave|walk|nod|look|run / fk(bone,x,y,z[,degrees]) 19 骨白名单、默认弧度（twin_client 契约，degrees=True 换算）/ stop() / state() / health()（reachable+模型信息）；统一 {ok, result|error[,hint]} 返回，连接失败 hint 含 blender --python scripts/blender_humanoid/twin_server.py；set_client()/create_server(client=None) 注入 client，get_client() 懒构造（TWIN_HOST/TWIN_PORT 覆盖，默认 127.0.0.1:8123），模块导入零副作用；注意本版本 FastMCP.tool() 第一位置参数是 name 而非函数，须用 mcp.tool()(fn) 注册；opencode.json（项目根）登记本地 MCP 'twin-control'=[python, scripts/blender_humanoid/twin_mcp_server.py]，重启 opencode 生效；验收 tests/acceptance/test_twin_mcp_server.py（stub 转发+参数校验+容错+asyncio call_tool 走线+env 端点，无网络无 GUI）登记为 twin-control-001 用例 twin-control-mcp-server-contract；abot-dev-process-001 描述标记阶段②已实现。commit 9990004。",
+      "id": "rm-mem-20260901-twin-mcp-server",
+      "name": "建模记忆 2026-09-01 (stage2 twin-control MCP server)",
       "type": "Business Object"
     }
   ],
@@ -1342,7 +1373,8 @@
         "rm-mem-20260830-action-evidence",
         "rm-mem-20260830-action-axis-fix",
         "rm-mem-20260830-baked-actions",
-        "rm-mem-20260901-keyboard-control"
+        "rm-mem-20260901-keyboard-control",
+        "rm-mem-20260901-twin-mcp-server"
       ],
       "included_relationships": []
     },
