@@ -1009,6 +1009,11 @@
         {
           "name": "deliveryStatus",
           "value": "pending-acceptance（已对话交付，待负责人验收；commit id 待有 git 权限的角色入库后登记）"
+        },
+        {
+          "name": "commit",
+          "value": "1c45335",
+          "description": "Desktop-humanoid development insight report registered by tech-report-writer, committed by overseer; files: design/KG/SystemArchitecture.json"
         }
       ],
       "description": "技术洞察报告（2026-09-01，对齐 aBot 路线图 P2物理→P3感知→P4智能大脑→P5硬件对齐）：洞察主题「如何开发一个桌面小型人形智能机器人」。一句话结论：以 aBot 数字孪生为主线走「舵机三级（SG90消耗品→STS3215跳板→Dynamixel终态）+专用多路舵机控制器+PC外挂主控+自研轻量硬件契约+LLM白名单闸门」的真机化四阶段路径；契约不变、后端扩三（Blender/MuJoCo/真机）；不重开 MuJoCo 选型；不建议追求双足行走；首要待拍板决策=形态（全人形坐姿 vs 上半身交互形态，需人类伙伴定）。四环判定：舵机 SG90=Trial（首台消耗品）/STS3215=Trial（性价比跳板）/RS30X=Assess/Dynamixel=Adopt（终态关节标准，总线契约抽象）；控制器 专用多路(PCA9685/32路)=Adopt、Arduino/主控直驱=Caution（Jaka 32路+19×SG90 论证）；主控 PC外挂=Adopt（零新增算力、sim2real 同机）/RDK X5=Trial/Jetson=Assess/M5Stack=Trial（限Step0）；软件 轻量自研契约(twin-control 扩展 hardware_adapter)=Adopt、ROS2=Trial（仅多传感融合/分布式/ros2_control 时引入）；智能 自然语言→意图→动作契约=Trial（硬闸门：LLM 只准调用已验收动作契约白名单、禁止直出关节角、安全联锁先行）/LeRobot=Assess；参考项目 OriginMan=Trial（首选对标：RDK X5+20DOF舵机+ROS2 Humble+TogetheROS.Bot+LLM代理 四层架构）/Stack-Chan=Trial（Phase0 体验机）/Reachy Mini=Assess/Bambot=Assess（仅遥操作）。四阶段（素材编号，勿与主路线图混）：Step0 能动（1-2周，Stack-Chan 或 3-4DOF 小臂+SG90+PCA9685+PC主控，<200元档，twin_client --backend=hardware 原型，relax/nod/look/wave 真机复现）；Step1 能改（2-6周，头2DOF+双臂8-10DOF，STS3215或Dynamixel小批量+U2D2+机身MCU+独立供电，~2000元档，hardware_adapter 正式化（关节角→舵机指令+标定表）、MJCF/真机共源生成、真机9动作证据图）；Step2 能感知（对齐P3：5MP相机+MPU6050+RDK X5 试点，感知先轻量进程接入契约，多传感融合才引 ROS2）；Step3 能对话（对齐P4：LLM→白名单→安全联锁→执行，LeRobot 遥操作再评审）。关键决策：不重开P2 MuJoCo（sim2real桥梁）；单一事实源延伸 build_humanoid.py→blend/MJCF/真机关节配置；契约不变后端扩三；桌面机不追求双足。风险：高=形态未拍板阻塞Step1采购/安全联锁缺失/总线电源冲击；中=舵机损耗影响证据/标定方法学缺失/ROS2过早引入过度工程/预算漂移；低=RDK X5生态、LeRobot数据量、供应链价格。待验证PoC七项：契约三后端联通、SG90 4DOF动作复现、标定映射精度、9动作证据图、安全联锁+白名单闸门演示、RDK X5感知轻量试点、总线电源能力。已验证（业界实证）：OriginMan 已落地；Stack-Chan Basic+SG90<200元能动；Bambot 15×STS3215<2000元整机；Jaka 论证专用控制器优于Arduino直驱；OpenCat→Open Duck Mini(42cm)→ToddlerBot(56cm/3.4kg)→Berkeley Humanoid Lite(~1m) 难度阶梯佐证「第一台不必全会、早动可改可看结果」。信源：DashScope WebSearch 2026（tech-radar-analyst-001 素材A）、tech-evaluator-001 四环判定与四阶段路径（素材B/C）、前报告 tech-insight-report-p2-physics-001（commit 3a2ead1）。",
