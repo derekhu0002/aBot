@@ -213,7 +213,7 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py；动作契约验收 tests/acceptance/test_humanoid_actions.py。",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）。",
       "attributes": [
         {
           "name": "commit",
@@ -237,7 +237,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
         },
         {
           "name": "commit",
@@ -252,6 +252,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "71fb109",
+          "description": "keyboard control entry: key_to_command pure mapping + stdlib key listener (msvcrt/termios) + health precheck with connection-failure guidance + mapping contract acceptance test; files: scripts/blender_humanoid/keyboard_control.py, tests/acceptance/test_keyboard_control.py"
         }
       ],
       "testcases": [
@@ -260,6 +265,13 @@
           "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py",
           "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量（局部 Euler + 世界空间 head/tail，同 /state 端点），并另在无 Python 驱动下重新打开 humanoid.blend 逐帧求值烘焙的命名 Action THEN 每个动作具备可辨识签名：relax 手下垂低；tpose 双臂水平伸展；apose 约45°下外；idle 胸腔呼吸幅度∈(0,0.05]；wave 解剖学右臂（rig 的 '.L' 骨链，world -X，前相机下屏幕左；机器人面朝 -Y，'.R' 链=解剖学左）外展~90°且前臂折起向上、手高于肩、左臂保持低垂；walk 大腿反相≥0.4rad 且单脚抬起、root 上下浮动；nod 头俯仰≥0.2rad（幅度已加深至 0.45rad）；look 头水平 yaw（head 骨 local Y = 世界竖直轴）≥0.45rad 且面内 roll 保持小；run 大腿摆幅≥0.6rad 且前倾≥0.2rad（均强于 walk）并有脚跟后踢；且 9 张 action_<name>.png 证据图为 1280x1280 PNG；且 blend 内置 ActionRelax/ActionTPose/ActionAPose/ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun，F-curve 为 joint-only（骨骼 rotation_euler + walk/run 的 FK root location），加载时已有 Action 绑定于 armature，无驱动逐帧求值复现同一批签名（即加载后按播放可见关节运动）。",
           "name": "twin-control-key-actions-contract",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/keyboard_control.py",
+          "acceptanceCriteria": "tests/acceptance/test_keyboard_control.py",
+          "description": "GIVEN 仓库含 scripts/blender_humanoid/keyboard_control.py（带 `if __name__ == \"__main__\"` 保护，import 不启动监听循环）WHEN 在无 Blender/GUI/网络环境下导入模块并对每个约定按键调用 key_to_command，再经桩客户端分发命令 THEN 每个文档化按键映射为精确 twin 命令（空格=(motion,idle,3.0)、1=(pose,relax)、2=(pose,tpose)、3=(pose,apose)、4=(motion,wave,3.0)、5=(motion,nod,3.0)、6=(motion,look,3.0)、7=(motion,walk,6.0)、8=(motion,run,6.0)、9=(pose,apose)、0=(stop)、h=(help)、q=(quit)），字母键大小写不敏感，未知键返回 None，帮助屏含且仅含 KEY_MAP 全部按键（帮助与映射一致），且 dispatch_command 对桩客户端正确调用 set_pose / start_motion(name,duration) / stop（外部视角、无需网络与运行中的 twin_server）。",
+          "name": "twin-control-keyboard-entry-mapping",
           "type": "Acceptance Test"
         }
       ]
@@ -1028,7 +1040,7 @@
       "type": "Business Object"
     },
     {
-      "description": "aBot 开发过程（2026-09-01 人类伙伴确认，三阶段递进，全程契约不变后端扩三）：①数字孪生（当前）：Blender 程序化角色（P0 完成）+ 动作控制接口 twin-control（P1 完成 pose/motion/FK/state）；待办：建立键盘→twin_client 基本动作控制入口（relax/nod/look/wave 等映射），目标=键盘可控制机器人基本动作。②MCP 接口：将 twin-control 接口封装为 MCP Server（pose/motion/FK/state 工具集），让 Agent 通过 MCP 调用接口，实现 Agent 对数字孪生角色的控制（对齐 P4 智能大脑前置）。③真实物理 ROBOT：组装真实桌面人形机器人（参考 tech-insight-report-desktop-humanoid-001：SG90→STS3215/Dynamixel、PCA9685、PC 外挂主控）+ MCP 接口；Agent 运行在电脑上，通过同一 MCP 契约控制真机（hardware_adapter 后端）。",
+      "description": "aBot 开发过程（2026-09-01 人类伙伴确认，三阶段递进，全程契约不变后端扩三）：①数字孪生（当前）：Blender 程序化角色（P0 完成）+ 动作控制接口 twin-control（P1 完成 pose/motion/FK/state）+ 键盘控制入口（2026-09-01 完成：keyboard_control.py 将键盘→twin_client 基本动作控制入口以纯函数映射 + 标准库监听循环实现，目标=键盘可控制机器人基本动作，验收 tests/acceptance/test_keyboard_control.py）。②MCP 接口：将 twin-control 接口封装为 MCP Server（pose/motion/FK/state 工具集），让 Agent 通过 MCP 调用接口，实现 Agent 对数字孪生角色的控制（对齐 P4 智能大脑前置）。③真实物理 ROBOT：组装真实桌面人形机器人（参考 tech-insight-report-desktop-humanoid-001：SG90→STS3215/Dynamixel、PCA9685、PC 外挂主控）+ MCP 接口；Agent 运行在电脑上，通过同一 MCP 契约控制真机（hardware_adapter 后端）。",
       "id": "abot-dev-process-001",
       "name": "aBot 开发过程：数字孪生→MCP→真实机器人",
       "testcases": [
@@ -1050,6 +1062,15 @@
           "name": "commit",
           "value": "3c786ef",
           "description": "3-stage dev process registered + sub-view abot-development-001 + acceptance test; files: tests/acceptance/test_abot_dev_process.py"
+        },
+        {
+          "name": "commit",
+          "value": "71fb109",
+          "description": "stage ① TODO done: keyboard control entry (keyboard→twin_client basic motions); files: scripts/blender_humanoid/keyboard_control.py, tests/acceptance/test_keyboard_control.py"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py"
         }
       ]
     }
