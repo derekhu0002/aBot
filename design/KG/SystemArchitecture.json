@@ -765,7 +765,13 @@
           "type": "Acceptance Test"
         }
       ],
-      "type": "Business Actor"
+      "type": "Business Actor",
+      "subdiagram_views": [
+        {
+          "view_id": "tech-evaluator-wm-001",
+          "view_name": "技术评估师工作记忆"
+        }
+      ]
     },
     {
       "attributes": [
@@ -932,7 +938,7 @@
       "id": "trw-wm-summary-001",
       "name": "会话总结 2026-09-01 (桌面人形机器人洞察报告)",
       "type": "Business Object",
-      "description": "T1会话总结（2026-09-01）：目标=整合素材A(雷达DashScope WebSearch业界调研)+素材B(评估师四环)+素材C(评估师四阶段路径)，输出《如何开发一个桌面小型人形智能机器人》中文洞察报告（对话内交付，遵用户指令未写文件）。结论：四阶段路径 Step0能动(<200元,SG90+PCA9685+PC主控,relax/nod/look/wave复现)→Step1能改(~2000元,STS3215/Dynamixel+标定表,9动作证据图)→Step2能感知(对齐P3,RDK X5试点)→Step3能对话(对齐P4,LLM白名单闸门+安全联锁)；舵机三级SG90→STS3215→Dynamixel(Adopt终态)、专用控制器Adopt、Arduino直驱Caution、PC外挂主控Adopt、契约不变后端扩三(Blender/MuJoCo/真机)、ROS2与LLM代理均Trial、不重开MuJoCo、不追求双足。待拍板：形态（全人形坐姿 vs 上半身交互形态）。报告已注册为元素 tech-insight-report-desktop-humanoid-001；因 170 视图触 15 元素上限，新建归档子视图 tech-insight-reports-001（挂 tech-insight-process-001 下），新旧两期报告均归档于此并从 170 移出旧报告（验收测试无此成员依赖）。遗留：本Actor无bash，commit id 待入库后由有权限角色登记；负责人验收待办。承前：/state 契约扩展须走验收测试；7项PoC清单随报告交付。",
+      "description": "T1会话总结（2026-09-01，第2次覆写）：目标=整合素材A(雷达DashScope WebSearch业界调研)+素材B(评估师四环判定与BOM，已入库tech-eval-desktop-humanoid-assembly-001)，输出《物理组装技术方案与材料选型(BOM)》中文报告（对话内交付，遵用户指令未写文件）。结论：12-DOF上半身坐姿基线（头2+臂5×2，可选躯干yaw+夹爪→15，腿零位锁死），STS3215 Step1主选/Dynamixel终态，PLA主体+PETG关节件+625ZZ+M3，USB-TTL总线+PC外挂主控（契约不变扩hardware_adapter），独立12V+UBEC共地；Step1 BOM≈$200-300(¥1500-2200)，Step0<¥300，Dynamixel升级+$500-900；六步组装（契约先行→单舵机台架→头→双臂→躯干走线→标定+9动作证据图+限位急停）。首要待拍板=形态（坐姿全人形 vs 上半身交互）。七项PoC移交tech-validator-001（其中三动作复现取relax+nod+wave，系撰写员按坐姿可动集合拟定，待负责人确认）。报告已注册为tech-insight-report-desktop-humanoid-assembly-001（Business Object，入tech-insight-reports-001+tech-insight-team-001，Association→tech-eval-desktop-humanoid-assembly-001，关系id=rel-report-assembly-basedon-eval-001，循前例：关系入端点共存视图team-001）；Tier3变更：preview→apply→validate通过；受影响验收测试核查：无成员依赖（沿前例）。遗留：本Actor无bash，commit id待项目总管登记；待tech-insight-lead-001验收。承前：/state契约扩展须走验收测试；不重开MuJoCo；桌面机不追求双足。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -1227,6 +1233,66 @@
           "description": "Phase summary registered into overseer LTM; files: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T1"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "lastSummaryAt",
+          "value": "2026-09-01"
+        }
+      ],
+      "description": "T1会话总结（2026-09-01）：目标=对雷达分析师『桌面人形物理组装技术方案与BOM』证据卡（LeRobot Humanoid/XLeRobot/Zeroth-01/SO-101/SG90+STM32/Roboto_origin/PAROL6/伯克利/ElectronBot）做四环判定并给出可采购选型。结论=12-DOF上半身坐姿基线（头2+臂5×2，腿骨零位锁死）；判定要点：舵机 SG90=Trial/STS3215=Trial(Step1首选，PoC过升Adopt)/Dynamixel=Adopt(终态)/摆线直驱=Assess；材料 PLA=Adopt/PETG=Trial/ABS=Assess/CNC铝=Assess/625ZZ=Adopt/M3=Adopt/GT2=Trial可选/移动底座=Assess；控制器 PCA9685=Adopt(Step0)/USB-TTL总线适配=Adopt/主控直驱=Caution/机载MCU身体代理=Trial；主控 PC外挂=Adopt/RDK X5=Trial；供电 独立12V开关电源=Adopt/UBEC共地=Adopt/电源站=Assess；传感 MPU6050=Trial/USB相机=Trial(Step2)/麦克风=Assess；项目 SO-101=Trial首选对标/Zeroth-01=Trial(BOM模板)/XLeRobot=Trial/ElectronBot=Trial/LeRobot Humanoid=Assess/Roboto_origin=Assess/PAROL6=Assess。BOM合计≈$200-300(¥1500-2200)。评估意见已注册 tech-eval-desktop-humanoid-assembly-001 入 tech-insight-team-001。遗留：形态拍板(首要)、walk/run降级、Step0是否执行、夹爪、移动底座；commit id 待有 git 权限角色登记；移交验证工程师7项PoC清单。",
+      "id": "tech-evaluator-wm-summary-001",
+      "name": "会话总结 2026-09-01 (桌面人形组装BOM评估)",
+      "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "insightTopic",
+          "value": "aBot 桌面小型人形机器人物理组装的技术方案与材料选型（BOM）"
+        },
+        {
+          "name": "basedOn",
+          "value": "tech-radar-analyst-001 情报卡（DashScope WebSearch 2026）+ tech-insight-report-desktop-humanoid-001 + tech-insight-report-p2-physics-001"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered-in-session（已对话交付；作为 tech-report-writer-001 报告素材；commit id 待有 git 权限的角色入库后登记）"
+        }
+      ],
+      "description": "技术评估意见（2026-09-01，tech-evaluator-001；洞察主题『aBot桌面小型人形机器人物理组装的技术方案与材料选型(BOM)』；证据=tech-radar-analyst-001 DashScope WebSearch 2026情报卡）。结论先行：12-DOF上半身桌面人形坐姿基线（头2 pitch/yaw+臂5×2：肩pitch/肩roll/肘pitch/腕pitch/腕yaw；可选躯干yaw+夹爪→15；腿骨零位锁死）；STS3215级串行总线舵机Step1主选、Dynamixel终态；PLA主体+PETG关节件+625ZZ轴承+M3标准件；USB↔TTL总线适配+PC外挂主控（twin-control契约不变，扩hardware_adapter）；独立12V开关电源+UBEC共地。四环：执行器 SG90=Trial(Step0消耗品)/STS3215=Trial(首选，PoC过升Adopt)/Dynamixel=Adopt(终态关节标准)/摆线齿轮箱直驱=Assess；材料 PLA=Adopt/PETG=Trial/ABS=Assess/CNC铝合金=Assess/625ZZ轴承=Adopt/GT2同步带=Trial可选/M3=Adopt/移动底座=Assess；控制器 PCA9685或32路板=Adopt(限Step0)/USB-TTL总线适配器+TTL hub=Adopt(每舵机独立ID)/STM32或Arduino多路直驱=Caution/机载STM32身体代理(仿ElectronBot)=Trial；主控 PC外挂=Adopt/RDK X5=Trial(P3试点)/STM32主控=Caution；供电 独立12V开关电源(≥舵机数×堵转电流裕量+大电容)=Adopt/UBEC+共地=Adopt/电源站C300=Assess(仅移动演示)；传感 MPU6050=Trial/USB 5MP相机=Trial(Step2)/麦克风扬声器=Assess/圆屏GC9A01=Assess；参考项目 SO-101=Trial(首选对标：遥操作改造为自主契约)/Zeroth-01=Trial(BOM模板~$350)/XLeRobot组装指南=Trial/ElectronBot=Trial/LeRobot Humanoid=Assess(借鉴其标定工具与装配文档)/Roboto_origin=Assess(躯干夹板思路)/PAROL6=Assess(PETG参数)/伯克利轻量人形=Assess(直驱样本)。BOM(12-DOF STS3215基线)：舵机12+2备件($85-130，锚点Zeroth-01 20×≈$200)、适配器+线材(十美元级)、12V/10A电源+电容+UBEC($15-25)、PLA0.5-1kg+PETG0.5kg($15-30)、M3套装($15)、625ZZ×8-12($10)、GT2($12可选)、相机+IMU($20-40，Step2)；合计≈$200-300(约¥1500-2200)；Step0 SG90+PCA9685<¥300；Dynamixel升级+$500-900。组装顺序：①契约先行(hardware_adapter+标定表YAML schema)②单舵机台架(ID分配+fk单关节验证)③头2-DOF(nod/look)④双臂5-DOF(wave)⑤躯干夹板+底座+走线(供电分离/应力释放)⑥全身标定(tpose工装)+9动作证据图+限位急停。架构衔接：19骨→12驱动器映射；fk→(servo_id,dir,offset,scale)、motion→关键帧插值、state←总线回读、health=ping+电压、stop=扭矩关；walk/run坐姿降级待拍板；build_humanoid.py三出口同源(blend/MJCF/真机关节配置)；标定表{servo_id,bone,axis,offset(rad),direction,limit,zero_pos,baud}；'.L'=解剖学右=world -X、面朝-Y延伸真机防镜像。风险：高=形态未拍板阻塞采购/总线电源冲击/安全联锁缺失/STS一致性；中=标定方法学缺失/线材可靠性/打印公差/双控制器复杂度/预算漂移；低=供应链价格/PETG调参/RDK生态。开放问题：①形态(首要)②walk/run降级③Step0是否执行④夹爪DOF⑤移动底座(建议否)。移交tech-validator-001七项PoC：单舵机闭环精度温升/12舵机电源负载压降/标定重复性/三动作真机复现/线材弯折可靠性/PETG轴承配合/限位急停演示。与既有报告 tech-insight-report-desktop-humanoid-001 四环结论一致并细化组装与BOM。",
+      "id": "tech-eval-desktop-humanoid-assembly-001",
+      "name": "技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01)",
+      "type": "Business Object"
+    },
+    {
+      "attributes": [
+        {
+          "name": "insightTopic",
+          "value": "aBot 桌面小型人形机器人物理组装的技术方案与材料选型（BOM）"
+        },
+        {
+          "name": "basedOn",
+          "value": "tech-radar-analyst-001 情报卡（DashScope WebSearch 2026）+ tech-evaluator-001 评估意见 tech-eval-desktop-humanoid-assembly-001"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "pending-acceptance（已对话交付；待负责人验收；commit id 待有 git 权限的项目总管入库后登记）"
+        }
+      ],
+      "description": "技术洞察报告（2026-09-01，tech-report-writer-001 整合；主题『aBot 桌面小型人形机器人物理组装的技术方案与材料选型(BOM)』；素材=tech-radar-analyst-001 DashScope WebSearch 2026 情报卡 + tech-evaluator-001 四环判定 tech-eval-desktop-humanoid-assembly-001；系 tech-insight-report-desktop-humanoid-001 的物理组装/BOM 深化篇）。一句话结论：¥1500-2200（$200-300）档构建 12-DOF 上半身桌面人形坐姿基线——头2(pitch/yaw)+臂5×2(肩pitch/roll、肘pitch、腕pitch/yaw)，可选躯干yaw+夹爪→15，腿骨零位锁死；STS3215级串行总线舵机Step1主选、Dynamixel终态；PLA主体+PETG关节件+625ZZ轴承+M3标准件；USB↔TTL总线适配+PC外挂主控（twin-control契约不变、扩hardware_adapter）；独立12V开关电源+UBEC共地。首要阻塞=形态拍板（坐姿全人形 vs 上半身交互形态，需人类伙伴定，本方案默认坐姿基线）。组装顺序：①契约先行(hardware_adapter+标定表YAML schema)②单舵机台架(ID分配+fk单关节验证)③头2-DOF④双臂5-DOF⑤躯干夹板+底座+走线⑥全身标定+9动作证据图+限位急停。BOM(Step1基线)：STS3215×12+2备件($85-130)、USB-TTL适配器+线材(十美元级)、12V/10A电源+大电容+UBEC($15-25)、PLA0.5-1kg+PETG0.5kg($15-30)、M3套装($15)、625ZZ×8-12($10)、GT2($12可选)、相机+IMU($20-40 Step2)，合计≈$200-300；Step0 SG90+PCA9685<¥300；Dynamixel升级+$500-900。四环：执行器SG90=Trial(Step0)/STS3215=Trial(首选)/Dynamixel=Adopt(终态)/摆线齿轮箱=Assess；材料PLA=Adopt/PETG=Trial/625ZZ=Adopt/M3=Adopt/GT2=Trial可选/ABS=CNC铝=Assess；控制器PCA9685=Adopt(Step0)/USB-TTL总线+hub=Adopt/STM32直驱=Caution/机载STM32身体代理=Trial；主控PC外挂=Adopt/RDK X5=Trial(P3)；供电独立12V开关电源+UBEC共地=Adopt；传感MPU6050/5MP相机=Trial(Step2)；参考项目SO-101=Trial(首选对标)/Zeroth-01=Trial(BOM模板~$350)/ElectronBot=XLeRobot=Trial/LeRobot Humanoid等=Assess。架构衔接：19骨→12驱动器；fk→(servo_id,dir,offset,scale)、motion→关键帧插值、state←总线回读、health=ping+电压、stop=扭矩关；标定表{servo_id,bone,axis,offset(rad),direction,limit,zero_pos,baud}；'.L'=解剖学右=world -X、面朝-Y延伸真机防镜像；build_humanoid.py单一事实源三出口(blend/MJCF/真机)。已验证(业界实证)：SO-101千元级12×STS3215、Zeroth-01 ~$350整机、XLeRobot 17×STS3215、LeRobot Humanoid <$3000含BOM/标定工具、伯克利轻量人形<$1000/16kg摆线直驱、ElectronBot桌面6-DOF、PAROL6 PETG实践、Roboto_origin结构件；内部：twin-control仿真侧契约(19骨/9动作)已工作。待验证(移交tech-validator-001七项PoC)：单舵机闭环精度温升/12舵机电源负载压降/标定重复性/三动作真机复现(relax+nod+wave)/线材弯折可靠性/PETG轴承配合/限位急停演示。风险：高=形态未拍板阻塞采购/总线电源冲击/安全联锁缺失/STS一致性；中=标定方法学/线材可靠性/打印公差/双控制器复杂度/预算漂移；低=供应链/PETG调参/RDK生态。开放问题：①形态(首要,待拍板)②walk/run坐姿降级③Step0是否执行④夹爪DOF⑤移动底座(建议否)。全部BOM价格为业界参考区间、未经本地供应链复核。交付状态：对话内已交付项目总管，待tech-insight-lead-001验收；撰写员无bash，commit登记留待项目总管。信源：DashScope WebSearch 2026(素材A)、tech-eval-desktop-humanoid-assembly-001(素材B)、tech-insight-report-desktop-humanoid-001(commit 1c45335)、tech-insight-report-p2-physics-001(commit 3a2ead1)。",
+      "id": "tech-insight-report-desktop-humanoid-assembly-001",
+      "name": "技术洞察报告 桌面人形物理组装方案与BOM (2026-09-01)",
+      "type": "Business Object"
     }
   ],
   "relationships": [
@@ -1379,6 +1445,26 @@
       "target_id": "twin-control-001",
       "target_name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Association"
+    },
+    {
+      "id": "rel-eval-assembly-input-to-report-001",
+      "name": "作为报告素材输入",
+      "source_id": "tech-eval-desktop-humanoid-assembly-001",
+      "source_name": "技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01)",
+      "statement": "技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01) --(Association)--> 技术洞察报告 桌面小型人形智能机器人开发路径 (2026-09-01)",
+      "target_id": "tech-insight-report-desktop-humanoid-001",
+      "target_name": "技术洞察报告 桌面小型人形智能机器人开发路径 (2026-09-01)",
+      "type": "Association"
+    },
+    {
+      "id": "rel-report-assembly-basedon-eval-001",
+      "name": "整合自组装BOM评估意见",
+      "source_id": "tech-insight-report-desktop-humanoid-assembly-001",
+      "source_name": "技术洞察报告 桌面人形物理组装方案与BOM (2026-09-01)",
+      "statement": "技术洞察报告 桌面人形物理组装方案与BOM (2026-09-01) --(Association)--> 技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01)",
+      "target_id": "tech-eval-desktop-humanoid-assembly-001",
+      "target_name": "技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01)",
+      "type": "Association"
     }
   ],
   "views": [
@@ -1519,14 +1605,18 @@
         "tech-report-writer-001",
         "tech-insight-process-001",
         "tech-insight-report-p2-physics-001",
-        "tech-insight-report-desktop-humanoid-001"
+        "tech-insight-report-desktop-humanoid-001",
+        "tech-eval-desktop-humanoid-assembly-001",
+        "tech-insight-report-desktop-humanoid-assembly-001"
       ],
       "included_relationships": [
         "lead-assigned-to-insight-process",
         "radar-assigned-to-insight-process",
         "evaluator-assigned-to-insight-process",
         "validator-assigned-to-insight-process",
-        "writer-assigned-to-insight-process"
+        "writer-assigned-to-insight-process",
+        "rel-eval-assembly-input-to-report-001",
+        "rel-report-assembly-basedon-eval-001"
       ],
       "parent_element_id": "tech-insight-process-001",
       "view_id": "tech-insight-team-001",
@@ -1555,7 +1645,8 @@
       "description": "技术洞察流程的产出报告归档子视图（2026-09-01 因顶层视图 15 元素上限分层建立）：存放各期技术洞察报告元素，由 tech-report-writer-001 整合、tech-insight-lead-001 验收。",
       "included_elements": [
         "tech-insight-report-p2-physics-001",
-        "tech-insight-report-desktop-humanoid-001"
+        "tech-insight-report-desktop-humanoid-001",
+        "tech-insight-report-desktop-humanoid-assembly-001"
       ],
       "included_relationships": [],
       "parent_element_id": "tech-insight-process-001",
@@ -1583,6 +1674,16 @@
       "parent_element_id": "abot-vision-001",
       "view_id": "abot-development-001",
       "view_name": "aBot 开发过程"
+    },
+    {
+      "description": "tech-evaluator-001 的 T1 工作记忆子视图（会话总结承载，幂等覆盖）。",
+      "included_elements": [
+        "tech-evaluator-wm-summary-001"
+      ],
+      "included_relationships": [],
+      "parent_element_id": "tech-evaluator-001",
+      "view_id": "tech-evaluator-wm-001",
+      "view_name": "技术评估师工作记忆"
     }
   ]
 }
