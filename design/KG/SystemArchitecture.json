@@ -1045,6 +1045,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "3c786ef",
+          "description": "3-stage dev process registered + sub-view abot-development-001 + acceptance test; files: tests/acceptance/test_abot_dev_process.py"
         }
       ]
     }
