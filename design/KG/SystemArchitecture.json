@@ -116,10 +116,6 @@
           "description": "regenerated humanoid.blend with 9 baked joint-rotation Actions + refreshed previews and action evidence stills; files: assets/humanoid/humanoid.blend, assets/humanoid/preview_*.png, assets/humanoid/action_*.png"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "28b7cc7",
           "description": "P2-T1/T2: humanoid gains its physics representation -- humanoid.mjcf dual outlet from the single procedural source (19 FK bones, primitives-only colliders, 19.33kg chibi mass budget w/ boot ballast, COM inside support polygon, MuJoCo static standing upright); files: assets/humanoid/humanoid.mjcf, scripts/blender_humanoid/humanoid_spec.py, scripts/blender_humanoid/mjcf_generator.py"
@@ -128,6 +124,10 @@
           "name": "commit",
           "value": "86877e3",
           "description": "P2-T4 closed-loop balance & stable gait for the model's MuJoCo physics body: balance_controller.py (joint-level proportional ankle/hip/trunk PD on pelvis tilt + whole-body COM-over-CoP regulation, perturb via xfrc_applied, telemetry; derivative feedback off), per-gait + nod motion envelopes in physics_adapter.py, balance_tune.py evidence harness; acceptance test_humanoid_balance.py headless; 20/20 regression green"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -200,13 +200,13 @@
           "description": "build reproducibility test extended: regenerated blend must ship 9 joint-only Actions; file: tests/acceptance/test_humanoid_build.py"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "28b7cc7",
           "description": "P2-T1: build pipeline refactored to consume humanoid_spec (single source of truth) for armature + physical part anchors, and gains the MJCF dual outlet (byte-identical, never from .blend); axial-convention firewall asserted inside the regenerated twin; files: scripts/blender_humanoid/build_humanoid.py, humanoid_spec.py, mjcf_generator.py, tests/acceptance/test_humanoid_build.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -289,10 +289,6 @@
           "description": "stage2: twin-control MCP server (FastMCP stdio, pose/motion/fk/stop/state/health) + acceptance test + opencode.json registration + graph testcase/description; files: scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_twin_mcp_server.py, opencode.json"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "28b7cc7",
           "description": "P2-T3: physics_adapter.py added as the third (backend=sim) MuJoCo backend behind the UNCHANGED twin-control contract -- pose/motion/FK -> qpos/ctrl, MuJoCo qpos/qvel/contact -> contract state pushable to twin_server POST /bones for Blender feedback, manual drive_once headless; 9 contract motions drive w/o crash, idle/look/wave/relax/tpose/apose stand upright; files: scripts/blender_humanoid/physics_adapter.py, tests/acceptance/test_humanoid_physics.py"
@@ -311,6 +307,10 @@
           "name": "commit",
           "value": "5ad1177",
           "description": "optional --model unitree_h1 on physics_twin_server (H1Adapter same contract; position-servo conversion + stand holder; walk/run/nod honestly rejected); files: scripts/blender_humanoid/menagerie_h1.py, scripts/blender_humanoid/physics_twin_server.py, scripts/fetch_menagerie.py, tests/acceptance/test_h1_model.py, assets/menagerie/unitree_h1/{scene.xml,h1.xml,LICENSE,README.md,CHANGELOG.md}, assets/menagerie/unitree_h1.md, .gitignore"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ],
       "testcases": [
@@ -415,7 +415,7 @@
         },
         {
           "name": "deliveryStatus",
-          "value": "delivered"
+          "value": "not_delivered"
         }
       ],
       "description": "aBot 视觉分析员：负责图像/视频/多模态内容的识别、理解、分析与报告。采用 Qwen3.8 多模态模型（alibaba-cn/qwen3.8-max，支持 text/image/video/pdf 输入）。对应 opencode agent 'visual-analyst'（.opencode/agent/visual-analyst.md），供其他 Actor 按 CapabilityDelegationGuideline 委派视觉分析子任务。稳定身份 visual-analyst-001。",
@@ -1414,10 +1414,6 @@
       "type": "Work Package",
       "attributes": [
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "0827428",
           "description": "P2 physics breakdown plan + acceptance test; files: tests/acceptance/test_p2_physics_plan.py"
@@ -1435,6 +1431,10 @@
           "name": "commit",
           "value": "86877e3",
           "description": "P2-T4a/T4b closed-loop balance & stable gait delivered on the MuJoCo physics twin; files: scripts/blender_humanoid/balance_controller.py, scripts/blender_humanoid/balance_tune.py, scripts/blender_humanoid/physics_adapter.py, scripts/blender_humanoid/physics_twin_server.py, tests/acceptance/test_humanoid_balance.py"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ]
     },
@@ -1548,13 +1548,13 @@
           "value": "Menagerie repo Apache-2.0; unitree_h1 model content BSD-3-Clause (Unitree Robotics) -- extracted digest committed at assets/menagerie/unitree_h1/LICENSE"
         },
         {
-          "name": "deliveryStatus",
-          "value": "delivered"
-        },
-        {
           "name": "commit",
           "value": "5ad1177",
           "description": "MuJoCo Menagerie unitree_h1 integration: fetch script + assets text core + H1Adapter/stand controller + physics_twin_server --model option + acceptance test; files: scripts/fetch_menagerie.py, assets/menagerie/unitree_h1.md, assets/menagerie/unitree_h1/{scene.xml,h1.xml,LICENSE,README.md,CHANGELOG.md}, scripts/blender_humanoid/menagerie_h1.py, scripts/blender_humanoid/physics_twin_server.py, tests/acceptance/test_h1_model.py, .gitignore"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
         }
       ]
     }
