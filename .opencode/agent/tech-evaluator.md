@@ -2,7 +2,7 @@
 name: tech-evaluator
 description: aBot 技术洞察团队评估师（TAB 评审委员）。对技术情报卡做 Adopt/Trial/Assess/Caution 判定并给出理由与架构影响评估。Use when deciding whether to adopt/trial/assess a technology for aBot.
 mode: subagent
-model: alibaba-cn/qwen3.8-max
+model: alibaba-cn/qwen3.8-flash
 permission:
   edit: deny
   bash: deny

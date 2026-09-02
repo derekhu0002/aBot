@@ -2,7 +2,7 @@
 name: visual-analyst
 description: aBot 视觉分析员。识别、理解、分析与报告图像/视频/PDF/多模态内容。Use when a task requires viewing images, videos, screenshots, render previews, or other multimodal content.
 mode: subagent
-model: alibaba-cn/qwen3.8-max
+model: alibaba-cn/qwen3.8-flash
 permission:
   edit: deny
   bash: deny
