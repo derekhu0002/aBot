@@ -132,6 +132,20 @@
       ],
       "testcases": [
         {
+          "Input": "assets/humanoid/humanoid.blend + preview_front.png + preview_3quarter.png",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_model.py",
+          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%、预览为 1280x1280 PNG；且第二轮差距修复外部几何成立：脚下无深灰平板、手部区域顶点数 ≥300、面罩前屏顶点椭球半径比落在 [0.99,1.10]、眼半径比 ≤1.10、面罩前侧有金/奶油包边顶点、面罩材质含扫描线 wave 节点。",
+          "name": "humanoid-model-robot-restyle-rig-integrity",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "assets/humanoid/humanoid.mjcf + scripts/blender_humanoid/humanoid_spec.py + mjcf_generator.py",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_physics.py",
+          "description": "GIVEN build_humanoid 从单一事实源 humanoid_spec.py 生成 humanoid.mjcf WHEN 用 MuJoCo 加载并校验 THEN mjcf 可加载且含 19 个 FK 同名体/关节、轴向断言通过（.L=解剖学右=world -X、竖直链 local Y=+Z、面朝 -Y、左右镜像）、碰撞体为原语（sphere/capsule/box）、显式质量配重（COM 落在足部支撑多边形内）、静态站立（up_z≈1）6 秒不倒不发散。",
+          "name": "humanoid-model-mjcf-physics-integrity",
+          "type": "Acceptance Test"
+        },
+        {
           "Input": "assets/humanoid/humanoid.mjcf + scripts/blender_humanoid/balance_controller.py + physics_adapter.py",
           "acceptanceCriteria": "tests/acceptance/test_humanoid_balance.py",
           "description": "GIVEN 人形模型的 MuJoCo 物理体在 balance_controller 闭环平衡（关节级比例踝/髋/躯干 PD on 骨盆倾角 + 全身 COM-over-CoP 调节，默认无隐藏力）下静立 WHEN 施加真实外力脉冲扰动、播放上肢动作与步态 THEN 静站稳定、侧向±150N/前向-150N/后向+80N 推扰后 up_z 恢复≈1（前向-150N 闭环恢复而开环跌倒，证明反馈有效）、idle/wave/nod/look 全程保持站立（开环 nod 会倒）、walk 经步态包络（scale0.3/tempo0.5）存活≥5s（开环约0.6s）、run 在其包络内存活，且 state 含 balance 遥测（tilt/COM误差/足载/assist=0）——外部视角、无 GUI、无外部网络。",
@@ -296,9 +310,37 @@
       ],
       "testcases": [
         {
+          "Input": "assets/humanoid/humanoid.blend + assets/humanoid/action_*.png + scripts/blender_humanoid/humanoid_control.py",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_actions.py",
+          "description": "GIVEN 仓库含 humanoid.blend（刚性按部件蒙皮）与 humanoid_control.py WHEN 无头经控制模块驱动 9 个关键动作并回读骨架外部观测量，并另在无 Python 驱动下重新打开 humanoid.blend 逐帧求值烘焙的命名 Action THEN 每个动作具备可辨识签名（relax/tpose/apose/idle/wave 右臂/.L 链/walk/nod/look 纯 yaw/run），9 张 action_<name>.png 为 1280x1280，blend 内置 9 个 joint-only Action，加载即播。",
+          "name": "twin-control-key-actions-contract",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/keyboard_control.py",
+          "acceptanceCriteria": "tests/acceptance/test_keyboard_control.py",
+          "description": "GIVEN 仓库含 keyboard_control.py（__main__ 保护，import 不启循环）WHEN 无 GUI/网络导入并对约定按键调 key_to_command、桩客户端 dispatch THEN 按键精确映射 twin 命令（空格=idle/1=relax/2=tpose/3=apose/4=wave/5=nod/6=look/7=walk/8=run/0=stop/h=help/q=quit），大小写不敏感、未知键 None、帮助屏与 KEY_MAP 一致、dispatch 正确调用。",
+          "name": "twin-control-keyboard-entry-mapping",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/twin_mcp_server.py",
+          "acceptanceCriteria": "tests/acceptance/test_twin_mcp_server.py",
+          "description": "GIVEN 仓库含 twin_mcp_server.py（FastMCP stdio 封装 twin_client，可注入 client）WHEN 无 GUI/网络导入并注入桩 client 列工具/调用 handler THEN 工具集恰为 {pose,motion,fk,stop,state,health}、正确转发契约、非法参数 ok=false 不调 client、client 故障转含启动命令错误、端点支持 TWIN_HOST/TWIN_PORT。",
+          "name": "twin-control-mcp-server-contract",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/physics_twin_server.py + twin_client.py（未改动）+ opencode.json",
+          "acceptanceCriteria": "tests/acceptance/test_physics_twin_server.py",
+          "description": "GIVEN 仓库含 physics_twin_server.py（MuJoCo 物理孪生，HTTP 契约与 twin_server 一致，GUI/--headless）与未改 twin_client.py WHEN 无 GUI 进程内 headless 启动并用 TwinClient 驱动、子进程 CLI 冒烟 THEN /health ok/backend=sim/19骨、/state 含 up_z 等物理扩展、/pose /motion /bones /stop queued ack、relax 静立 up_z≈1、wave 可观测且到时自停直立、/bones 伺服跟踪、/stop 复位；opencode.json 并列登记 twin-control(8123) 与 twin-physics(8124, environment TWIN_PORT)。",
+          "name": "twin-control-physics-twin-server-contract",
+          "type": "Acceptance Test"
+        },
+        {
           "Input": "scripts/blender_humanoid/physics_twin_server.py + balance_controller.py + twin_client.py（未改动）",
           "acceptanceCriteria": "tests/acceptance/test_humanoid_balance.py",
-          "description": "GIVEN MuJoCo 物理孪生在 127.0.0.1 loopback 无头运行且 balance_controller 闭环平衡作为底层叠加（契约不变，动作仍可下发）WHEN 经 HTTP 施加 POST /perturb 外力脉冲、GET/POST /balance 读改平衡配置并播放上肢动作与步态 THEN /perturb 后机器人恢复直立、/balance 返回 config+telemetry 且 patch 生效、balance 遥测出现在 /state、auto_reseat 可控，且既有 /health /state /pose /motion /bones /stop 契约不被破坏——外部视角、无 GUI、无外部网络。",
+          "description": "GIVEN MuJoCo 物理孪生 loopback 无头运行且 balance_controller 闭环平衡作为底层叠加（契约不变）WHEN HTTP 施加 /perturb 外力、GET/POST /balance 并播放动作与步态 THEN 扰动后恢复直立、/balance 返回 config+telemetry 且 patch 生效、balance 遥测出现在 /state、auto_reseat 可控、既有契约不破坏——外部视角、无 GUI、无外部网络。",
           "name": "twin-control-closed-loop-balance-service",
           "type": "Acceptance Test"
         }
