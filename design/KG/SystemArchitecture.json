@@ -587,7 +587,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-09-01 第二会话）：目标=abot-dev-process-001 阶段②把 twin-control 封装为 MCP Server。完成：scripts/blender_humanoid/twin_mcp_server.py——FastMCP(stdio) 封装 twin_client，工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，全部带 Agent 可读 description；校验 pose/motion/骨名/参数（非法→清晰 ok=false 错误且不调 client）；fk 默认弧度（twin_client 契约），degrees=True 自动换算；twin_server 未运行→ok=false+启动命令提示不崩溃；set_client/create_server(client=...) 注入 client 可测；TWIN_HOST/TWIN_PORT 环境变量覆盖端点；项目级 opencode.json 登记本地 MCP 'twin-control'（重启 opencode 生效）。验收 test_twin_mcp_server.py（stub 转发+校验+容错+call_tool 走线+env 端点，无网络无 GUI）登记为 twin-control-001 用例 twin-control-mcp-server-contract；abot-dev-process-001 描述标记阶段②已实现（含待重启+需 twin_server 运行）。15 验收测试全过 + validate 过；commit 9990004（代码+测试+opencode.json+图 testcase/描述）。关键决策：①pose 也严格校验（'wave' 是动作非姿势，转发契约测试例用 pose('relax')→set_pose('relax')）；②handler 为模块级纯函数，create_server 用 mcp.tool()(fn) 注册（本版本 FastMCP.tool() 第一位置参数是 name 而非函数——坑）；③get_client 懒构造且调用时读 env，导入零副作用；④工具统一返回 {ok,...} 字典，错误带 hint。遗留/下一步：重启 opencode 后在 twin_server（GUI Blender）运行下端到端验证 twin-control 工具；阶段③真机（同契约换 hardware_adapter）。",
+      "description": "会话总结（2026-09-02）：目标=执行 P2 物理化计划 T1+T2+T3，给 chibi 数字孪生装上 MuJoCo 真实物理。完成：①humanoid_spec.py 单一事实源（19 骨树+探针实测骨轴+部件锚点+质量预算+104 轴向断言）；②mjcf_generator.py 双出口（humanoid.mjcf 与 .blend 同源、字节确定、每骨 3 铰链精确复现 Blender XYZ euler=Rz@Ry@Rx、54 伺服）；③T2 碰撞原语+19.33kg 配重（2×3kg 靴底配重球，COM=0.302m 支撑多边形内）静站 up_z=1.000；④physics_adapter.py 契约薄适配（第三后端，9 动作零崩溃，状态可 POST /bones 回灌）；⑤build_humanoid.py 重构消费 spec+导出 MJCF；⑥test_humanoid_physics.py 新增+test_humanoid_build.py 扩展，18/18 绿。决策：探针实测不推断轴向；adapter 跑系统 Python 走 /bones 回灌（不往 Blender 塞 mujoco）；walk/run/nod 开环跌倒=诚实物理移交 T4。commit 28b7cc7（代码+资产+测试）+26ca2dd（图登记，M1 达成）。遗留：T4 物理动作复现防摔、T5 接触/步态、T6 参数敏感性、T7 sim2real 标定、GitHub push。经验：MJCF capsule 用 pos+quat+size 无 from/to；共面接触须落位间隙；穿透对要 exclude；关节范围序与输出序要显式映射；头部伺服须近临界阻尼。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -599,7 +599,7 @@
         },
         {
           "name": "lastSummaryAt",
-          "value": "2026-09-01"
+          "value": "2026-09-02"
         }
       ]
     },
@@ -1366,6 +1366,32 @@
           "value": "2026-09-02 commit 28b7cc7: T1(MJCF dual outlet + 104 axis assertions) DONE; T2(primitive colliders + chibi ballast, MuJoCo static standing upright, no divergence) DONE; T3(physics_adapter third backend, 9 motions drive w/o crash, idle/look/wave/relax/tpose/apose upright; walk/run/nod open-loop falls deferred to T4) DONE -> milestone M1 reached. Pending: T4(9 motions stable under physics), T5(contact/gait), T6(param sensitivity), T7(sim2real calibration), T8(Newton/Isaac tracking)."
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260902-p2-physics-t123",
+      "name": "建模记忆 2026-09-02 (P2 physics T1-T3: MJCF dual outlet + ballast + physics_adapter)",
+      "type": "Business Object",
+      "description": "会话记录（2026-09-02，机器人3D建模员）：P2 物理化 T1+T2+T3 落地（计划 abot-p2-physics-plan-001，里程碑 M1 达成），MuJoCo 3.12 内核、Blender 保持渲染层、twin-control 契约不变后端扩三。交付：①T1 单一事实源双出口——新增 humanoid_spec.py（纯 Python：19 骨树 head/tail/parent + Blender 探针实测的骨局部轴帧 + 物理部件锚点 + 显式质量预算 + 104 项轴向断言含 FK 镜像防火墙），build_humanoid.py 重构为从 spec 建骨架/物理部件并在 main() 导出 humanoid.mjcf（与 .blend 同源、字节确定性、禁逆向）；MJCF=19 体同名 + 每骨 3 铰链（Rz@Ry@Rx 精确复现 Blender XYZ euler）+ 54 position 伺服。②T2 碰撞原语（头 sphere、躯干/四肢 capsule、脚 box，禁渲染网格）+ 19.33kg chibi 配重（3kg×2 靴底配重球 → COM (0,-0.019,0.302) 落于支撑多边形），MuJoCo 静站 up_z=1.000 无发散。③T3 physics_adapter.py——契约薄适配（pose/motion/FK→ctrl；qpos/qvel/接触力→契约 state，可 POST /bones 回灌 Blender；无头手动 drive_once），9 动作驱动零崩溃，idle/look/wave/relax/tpose/apose 物理静立（walk/run/nod 开环跌倒=诚实物理，移交 T4）；验收 test_humanoid_physics.py + test_humanoid_build.py 扩展（字节一致双出口 + 孪生内骨架帧=spec 轴向防火墙），18/18 全绿。关键决策：①骨轴/欧拉语义不推断、全部 Blender 探针实测（Blender XYZ euler 实为 R=Rz@Ry@Rx；FK 链 T_child=T_parent·(F_p_restᵀ·F_c_rest)·R_pose）；②adapter 跑系统 Python（Blender Python 无 mujoco、不塞依赖），回灌走既有 /bones 契约；③配重用显式质量+配重球而非几何密度；④BONE_CREATE_ORDER 保持历史建骨顺序防 roll 帧漂移。坑记录：①MJCF capsule 无 from/to 属性 → pos+quat+size(radius halflength)、胶囊轴=geom 局部 Z；②足底与地面精确共面 → t=0 接触爆炸（v_z≈1m/s），需 SPAWN_LIFT 5mm 落位间隙；③全局 geom solref=\"0.004 1\" 过刚 → 爆炸，用默认+margin=0.002；④静止穿透（骨盆↔胸、腹↔大腿、大腿↔靴、前臂↔大腿）→ CONTACT_EXCLUDES + 碰撞体瘦身至渲染尺寸；⑤JOINT_TUNING range 序是 (X,Y,Z) 而关节按 (z,y,x) 输出 → 轴序错接（外展被 pitch 范围 clamp），需显式 axis→index 映射；⑥头颈伺服欠阻尼（头盔 3kg I≈0.25，kp40/damp0.4 → ζ≈0.06）nod 振铃甩倒 → 近临界阻尼（head damp 3.0）；⑦humanoid_control 需 bpy/mathutils 守卫 import 才能纯 Python 采样驱动器；FakeArm.pose.bones 迭代须还 bone 对象（Blender RNA 语义）非 dict keys；⑧mj_contactForce 新版须传 result 缓冲；⑨walk/run root loc=(0,0,bob) 在 root 局部系（Z=world -Y）实为前后摆动非竖直起伏，浮动基座不可位置指令，文档化为契约偏差。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "name": "commit",
+          "value": "28b7cc7",
+          "description": "P2 T1/T2/T3 physics backend code + asset + acceptance tests"
+        },
+        {
+          "name": "commit",
+          "value": "26ca2dd",
+          "description": "graph registration of 28b7cc7 on humanoid-model/build, twin-control, p2-physics-plan"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/blender_humanoid/humanoid_spec.py; scripts/blender_humanoid/mjcf_generator.py; scripts/blender_humanoid/physics_adapter.py; scripts/blender_humanoid/build_humanoid.py; scripts/blender_humanoid/humanoid_control.py; assets/humanoid/humanoid.mjcf; tests/acceptance/test_humanoid_physics.py; tests/acceptance/test_humanoid_build.py"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1645,7 +1671,8 @@
         "rm-mem-20260830-action-axis-fix",
         "rm-mem-20260830-baked-actions",
         "rm-mem-20260901-keyboard-control",
-        "rm-mem-20260901-twin-mcp-server"
+        "rm-mem-20260901-twin-mcp-server",
+        "rm-mem-20260902-p2-physics-t123"
       ],
       "included_relationships": []
     },
