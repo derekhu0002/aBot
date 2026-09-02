@@ -648,7 +648,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-09-02 第三场）：目标=让 MuJoCo 物理孪生站稳、走稳（P2-T4 闭环平衡与步态控制）。完成：①T4a 站立平衡——balance_controller.py 关节级纯比例踝/髋/躯干 PD（root 骨盆倾角感测 + 世界轴投影分发）+ 踝通道全身 COM-over-CoP 调节（低通滤波、只数 floor-foot 接触），默认无隐藏力；静站/idle/wave/nod/look 全站立，侧向±150N、前向-150N（超开环包络）、后向+80N 推扰恢复。②T4b 稳定步态——每步态包络：walk scale0.3/tempo0.5、run scale0.2/tempo0.4+躯干×0.5、nod 头×0.62；walk/run 原地 12s+ 不倒（开环 0.6s）。③服务面：契约不变，新增 POST /perturb、GET/POST /balance、/state 含 balance 遥测、跌倒后 auto-reseat；GUI 视窗实测走稳（up_z 0.994）。④验收 test_humanoid_balance.py（headless，开/闭环对照）+ 登记 humanoid-model-001 / twin-control-001 双用例 + 计划 T4a/T4b 进展。回归 20/20、KG 15/15、validate 全绿。关键决策：纯关节力矩不用虚拟助力（物理诚实）；纯 P 控制（微分经柔性足底必失稳）；root 感测+低增益化解『感测快慢 vs 抗动作』矛盾。遗留：倒地动态自起立、导数/COM 速度阻尼、全幅 Blender 步态的真稳定（当前靠包络缩放）——均列为后续；T5 接触/步态量化复测（POC-1）待做。经验：执行器符号/效果必须实测（恒幅 ctrl 看 d(e)/dCOM），推理会错；CoP 未滤波抖动可致命。",
+      "description": "会话总结（2026-09-02 第四场）：目标=给物理孪生接入完整真实人形（用户选择 MuJoCo Menagerie Unitree H1）。完成：①资产获取——浅克隆+稀疏检出 unitree_h1 入 assets/menagerie/（scene.xml/h1.xml/LICENSE/README 入库，17MB STL/PNG 走 .gitignore），scripts/fetch_menagerie.py 幂等可复现（重试+按模型提取 LICENSE 段：仓库 Apache-2.0、模型内容 BSD-3-Clause/Unitree）。②menagerie_h1.py H1Adapter（与 chibi 同命令面，契约零改动）：motor→MuJoCo 原生 position 伺服内存转换（伺服速率反馈，原力矩限幅保留）+ H1StandController 30Hz 目标调制（倾角纯比例+COM 速度制动+COM-over-CoP，符号实测）。③实测包络：静站 60s up_z≈0.999；idle/wave/look 可播全程站立；前向≤150N、横向≤±250N 推扰恢复；后向不可恢复（足跟 3.5cm，诚实边界）；walk/run/nod 拒绝。④physics_twin_server --model 选项（默认 humanoid 不变），GUI 实测站立。⑤验收 test_h1_model.py（headless，自动 fetch）；登记 unitree-h1-model-001（新子视图挂 twin-control-001）+ twin-control-001 双用例。回归：仓库 21/21 绿、KG 22/23、validate 全绿（唯一失败=visual-analyst 存量漂移，非本次）。关键决策：独立适配器隔离不动 chibi 链路；上游 XML 不改；重二进制不入库。坑：30Hz 外力矩环必失稳（需伺服速率 position）、subtree_linvel 默认不算、刚体漂移对 COM-CoP 不可见需绝对速度制动、髋pitch 反馈增益>0.6 破坏静站、D 项经接触失稳、Windows GBK 编码、sparse-checkout 文件型 LICENSE 用 git show。遗留：walk/run 需 RL 策略（P4）；后向推恢复需迈步/足底策略；visual-analyst.md 存量漂移待该 Actor 处理；T5 接触量化复测未动。经验：执行器反馈速率比控制律更先验（同控制律 30Hz 力矩环倒、伺服速率即稳）；符号一律实测；诚实边界量化记录（包络入测试与图）。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -666,6 +666,11 @@
           "name": "commit",
           "value": "86877e3 / 3f2858e / 17c9923",
           "description": "P2-T4 closed-loop balance + stable gait (code / graph registration / LTM memory)"
+        },
+        {
+          "name": "commit",
+          "value": "5ad1177 / f2b761f / fb6df9e",
+          "description": "Unitree H1 optional physics-twin model (code / graph registration / lifecycle refresh)"
         }
       ]
     },
@@ -1557,6 +1562,40 @@
           "value": "delivered"
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260902-h1-menagerie",
+      "name": "建模记忆 2026-09-02 (Unitree H1 Menagerie 接入物理孪生)",
+      "type": "Business Object",
+      "description": "会话记录（2026-09-02，机器人3D建模员）：用户在物理孪生窗口看到完整真实人形——MuJoCo Menagerie Unitree H1 以 --model unitree_h1 可选接入 physics_twin_server（8124），默认仍是 chibi。交付（commit 5ad1177 + 图登记 f2b761f）：①资产：浅克隆+稀疏检出 unitree_h1 入 assets/menagerie/，scripts/fetch_menagerie.py 幂等可复现（克隆重试）；文本核心（scene.xml/h1.xml/LICENSE/README）入库，17MB STL/PNG 走 .gitignore；LICENSE 从仓库根 digest 按模型段精确提取（Menagerie 仓库 Apache-2.0，unitree_h1 模型内容 BSD-3-Clause/Unitree）。②menagerie_h1.py：H1Adapter 与 chibi PhysicsAdapter 同命令面（契约零改动），加载时把 Menagerie motor 执行器内存转为 MuJoCo 原生 position 伺服（kp hip400/knee600/ankle200/torso200/shoulder100/elbow50 + 内阻尼，原 ctrlrange 保留为力矩限幅），30Hz 慢环只调位置目标：H1StandController=骨盆倾角纯比例（踝/髋pitch/髋roll，符号实测：踝pitch+、髋pitch-、髋roll+）+COM 速度制动+COM-over-CoP。实测：静站 60s up_z≈0.999 漂移<2cm；keyframe 3cm 落位不摔；idle/wave/look 全程站立；推扰前向≤150N·0.1s、横向≤±250N·0.1s 恢复；后向任何幅度不可恢复（足跟仅 3.5cm 力臂，诚实边界）；walk/run/nod 拒绝（无颈关节/需策略）。③验收 test_h1_model.py headless（缺资产自动 fetch；加载完整性 nbody≥21/njnt≥20/nq≥26/nu=19 + 站立量化 + 可驱动 + 契约/默认链路不回归），登记 unitree-h1-model-001（新建子视图 view-h1-model-001 挂 twin-control-001 下）+ twin-control-001 双用例。回归：仓库 21/21 绿、KG 22/23（唯一失败为 visual-analyst 存量漂移，非本次改动）。关键决策：H1 独立适配器不动 chibi 链路；上游 XML 不改（执行器内存转换）；重型网格不入库（体积可复现拉取）。坑（均实证）：① 30Hz 外力矩环+高刚 PD 相位滞后注入能量，所有配置 1s 内失稳（maxv 30-100）——必须伺服速率反馈（原生 position 执行器是稳定关键，与 chibi MJCF position 伺服同构）；②重力前馈：qfrc_bias 不含接触，接触态静持力矩需 mj_inverse(qacc=0)，但仅前馈仍倒（倒立摆需反馈）；③data.subtree_linvel 默认不计算（恒 0）——COM 速度用 subtree_com 有限差分；④刚体漂移对 COM-over-CoP 不可见（整体平移误差不变）——绝对 COM 速度制动不可少（kv=0 即倒）；⑤摩擦非漂移原因（μ=2 照漂）；⑥髋pitch 反馈 kh≥1.0 破坏静站（只 0.6 可用），D 项经接触失稳（与 chibi 同）；⑦Menagerie LICENSE 是 per-model digest 需按段提取；cone sparse-checkout 不收文件型 LICENSE，用 git show HEAD:LICENSE；⑧Windows subprocess text=True 默认 GBK，git show 输出需二进制捕获；⑨GitHub 连接会瞬时重置，拉取需重试。遗留：walk/run 需 RL 策略（P4）；后向推恢复需足底几何/迈步策略；visual-analyst.md 工作区存量漂移（model max→flash 未提交）待该 Actor 处理。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "date",
+          "value": "2026-09-02"
+        },
+        {
+          "name": "commit",
+          "value": "5ad1177",
+          "description": "Unitree H1 Menagerie integration (fetch script, assets text core, H1Adapter + stand controller, --model option, acceptance test)"
+        },
+        {
+          "name": "commit",
+          "value": "f2b761f",
+          "description": "graph registration: unitree-h1-model-001 (+view-h1-model-001, Access rel) + twin-control-001 testcase/file_paths/description"
+        },
+        {
+          "name": "file_paths",
+          "value": "scripts/fetch_menagerie.py; scripts/blender_humanoid/menagerie_h1.py; scripts/blender_humanoid/physics_twin_server.py; tests/acceptance/test_h1_model.py; assets/menagerie/unitree_h1.md; assets/menagerie/unitree_h1/{scene.xml,h1.xml,LICENSE,README.md,CHANGELOG.md}; .gitignore"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1850,7 +1889,8 @@
         "rm-mem-20260901-twin-mcp-server",
         "rm-mem-20260902-p2-physics-t123",
         "rm-mem-20260902-physics-twin-server",
-        "rm-mem-20260902-balance-t4"
+        "rm-mem-20260902-balance-t4",
+        "rm-mem-20260902-h1-menagerie"
       ],
       "included_relationships": []
     },
