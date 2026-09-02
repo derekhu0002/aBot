@@ -17,21 +17,34 @@ Run (bounded smoke: N frames then exit, prints SMOKE_JSON):
     python scripts/blender_humanoid/physics_twin_server.py --headless --frames 300
     python scripts/blender_humanoid/physics_twin_server.py --frames 90  # GUI probe
 
-Honest physics note: walk/run/nod are OPEN-LOOP playbacks (no balance
-feedback yet -- that is P2 milestone T4), so the robot may fall over; the
-window truthfully shows the fall and the floor contacts. /stop re-seats the
-robot onto its upright 'home' keyframe (kinematic snap -- same contract
-semantics as the Blender twin_server's stop -> rest pose).
+Closed-loop balance (P2-T4, 2026-09-02): a BalanceController runs underneath
+the contract on every tick -- joint-level proportional ankle/hip/trunk
+feedback on pelvis tilt plus whole-body-COM-over-CoP regulation. It recovers
+moderate external pushes, keeps idle/wave/nod/look standing, and stabilizes
+walk/run via a documented gait envelope (scaled swing + slower cadence) and
+nod via a scaled head amplitude. This is JOINT-LEVEL control with NO hidden
+forces by default (an optional, explicitly-labeled virtual balance assist is
+off). Balance is observable in GET /state ("balance" block) and GET /balance;
+POST /perturb applies a real external force pulse; POST /balance patches the
+controller. /stop (and auto-reseat after a fall) re-seats the robot onto its
+upright 'home' keyframe (kinematic snap -- same contract semantics as the
+Blender twin_server's stop -> rest pose). Dynamic self-righting from lying is
+future work.
 
 API (JSON -- identical contract to twin_server.py, default port 8124):
     GET  /health  -> {"status": "ok", "backend": "sim", "model": ..., "bones": 19}
     GET  /state   -> contract state + physics extras (root.pos/height/up_z,
-                     sim_time, max_qvel, contacts)
+                     sim_time, max_qvel, contacts) + "balance" telemetry
     POST /pose    {"name": "relax"|"tpose"|"apose"}            static pose
     POST /motion  {"name": "idle"|"wave"|"walk"|"nod"|"look"|"run",
                    "duration": seconds}                         timed motion
     POST /bones   {"bones": {"upper_arm.R": [0,0,1.57], ...}}  raw FK (rad)
     POST /stop    {}                                            stop + rest
+    -- P2-T4 balance extensions (do not change the contract above) --
+    POST /perturb {"force": [fx,fy,fz], "duration": s, "body": "chest"}
+    GET  /balance -> {"config": ..., "telemetry": ...}
+    POST /balance {"mode","enabled","gait_scale","gait_tempo","assist_gain",
+                   "auto_reseat"}  (any subset)
 
 Endpoint: 127.0.0.1:8124 by default (the Blender twin_server owns 8123);
 override with PHYSICS_TWIN_HOST / PHYSICS_TWIN_PORT env vars or --host/--port.
@@ -57,6 +70,9 @@ import physics_adapter as pa  # noqa: E402
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8124  # Blender twin_server owns 8123; keep them separable
 TICK = pa.TICK       # 30 fps drive loop (contract tempo)
+# P2-T4: auto-reseat a fallen robot after this many seconds down (honest
+# kinematic recovery, not dynamic self-righting; see BalanceController).
+RESEAT_AFTER_S = 2.0
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +91,7 @@ class PhysicsTwin(object):
         self.adapter = adapter or pa.PhysicsAdapter(mjcf_path)
         self.cmd_queue = queue.Queue()
         self.state_cache = self.adapter.state()
+        self._fallen_ticks = 0  # P2-T4 auto-reseat counter
 
     # -- command surface (queued; consumed by the drive thread) -------------
     def queue_pose(self, name):
@@ -88,6 +105,15 @@ class PhysicsTwin(object):
 
     def queue_stop(self):
         self.cmd_queue.put(("stop", {}))
+
+    def queue_perturb(self, force, duration=0.1, body="chest"):
+        """P2-T4: queue a real external force pulse (push the robot)."""
+        self.cmd_queue.put(("perturb", {"force": force, "duration": duration,
+                                        "body": body}))
+
+    def queue_balance(self, patch):
+        """P2-T4: queue a balance-controller configuration patch."""
+        self.cmd_queue.put(("balance", {"patch": patch}))
 
     def consume_commands(self):
         while not self.cmd_queue.empty():
@@ -105,15 +131,35 @@ class PhysicsTwin(object):
                     # contract semantics "stop -> rest pose": re-seat onto the
                     # upright 'home' keyframe (kinematic snap), then settle
                     self.adapter.reset()
+                elif typ == "perturb":
+                    self.adapter.perturb(payload.get("force", [0, 0, 0]),
+                                         payload.get("duration", 0.1),
+                                         payload.get("body", "chest"))
+                elif typ == "balance":
+                    self.adapter.balance.configure(payload.get("patch", {}))
             except Exception as exc:  # noqa: BLE001 - serve must survive
                 print("physics_twin_server: %s command failed: %s"
                       % (typ, exc), flush=True)
 
     # -- drive ----------------------------------------------------------------
     def drive_once(self):
-        """One 30 fps tick: consume commands, step physics, refresh cache."""
+        """One 30 fps tick: consume commands, step physics, refresh cache.
+
+        P2-T4 auto-reseat: if the robot has been down (balance 'fell') for
+        RESEAT_AFTER_S of sim time and auto_reseat is on, kinematically re-seat
+        it onto the upright home keyframe (same semantics as /stop). This is a
+        recovery convenience, NOT dynamic self-righting (future work).
+        """
         self.consume_commands()
         self.adapter.drive_once()
+        tel = self.adapter.balance.telemetry()
+        if tel.get("fell") and self.adapter.balance.auto_reseat:
+            self._fallen_ticks = getattr(self, "_fallen_ticks", 0) + 1
+            if self._fallen_ticks >= int(RESEAT_AFTER_S / TICK):
+                self.adapter.reset()
+                self._fallen_ticks = 0
+        else:
+            self._fallen_ticks = 0
         self.state_cache = self.adapter.state()
 
 
@@ -163,6 +209,11 @@ def make_handler(twin):
                 self._reply(200, twin.adapter.health())
             elif self.path.startswith("/state"):
                 self._reply(200, twin.state_cache)
+            elif self.path.startswith("/balance"):
+                # P2-T4: balance config + telemetry (external observability)
+                bal = twin.adapter.balance
+                self._reply(200, {"config": bal.config(),
+                                  "telemetry": bal.telemetry()})
             else:
                 self._reply(404, {"error": "not found"})
 
@@ -183,6 +234,18 @@ def make_handler(twin):
             elif self.path.startswith("/stop"):
                 twin.queue_stop()
                 self._reply(200, {"queued": True})
+            elif self.path.startswith("/perturb"):
+                # P2-T4: apply a real external force pulse (push the robot)
+                force = body.get("force", [0, 0, 0])
+                twin.queue_perturb(force, body.get("duration", 0.1),
+                                   body.get("body", "chest"))
+                self._reply(200, {"queued": True, "force": force,
+                                  "duration": body.get("duration", 0.1),
+                                  "body": body.get("body", "chest")})
+            elif self.path.startswith("/balance"):
+                # P2-T4: patch balance-controller configuration
+                twin.queue_balance(body)
+                self._reply(200, {"queued": True, "patch": body})
             else:
                 self._reply(404, {"error": "not found"})
 
@@ -334,9 +397,10 @@ def main(argv=None):
             finally:
                 stop_event.set()
         else:
-            print("watch the window: drag=orbit, scroll=zoom; walk/run/nod "
-                  "are open-loop and may fall (honest physics; balance "
-                  "feedback is P2-T4)", flush=True)
+            print("watch the window: drag=orbit, scroll=zoom; closed-loop "
+                  "balance keeps it standing against moderate pushes; "
+                  "walk/run/nod play through the documented balance envelope "
+                  "(P2-T4)", flush=True)
             run_gui(twin, frames=None)
     finally:
         srv.shutdown()

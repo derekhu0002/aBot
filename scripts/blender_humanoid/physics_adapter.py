@@ -12,9 +12,14 @@ this adapter is the third backend (backend=sim):
 
 Design notes
 ------------
-* The contract motion drivers (humanoid_control.MOTION_DRIVERS) are sampled
-  on a lightweight FakeArm -- they are pure math (no bpy), so the adapter
-  runs in plain Python where the MuJoCo wheel lives.
+ * The contract motion drivers (humanoid_control.MOTION_DRIVERS) are sampled
+   on a lightweight FakeArm -- they are pure math (no bpy), so the adapter
+   runs in plain Python where the MuJoCo wheel lives.
+ * P2-T4 (2026-09-02): CLOSED-LOOP BALANCE. A BalanceController overlay runs
+   on every 30 fps tick underneath the contract: joint-level PD (ankle +
+   hip/trunk strategy) keeps the robot standing against perturbations, and
+   walk/run additionally get a documented gait-envelope governor (gait_scale/
+   gait_tempo). See balance_controller.py for the honest-physics scope.
 * Joint mapping is 1:1: every FK-contract bone has three MuJoCo hinges
   (.x/.y/.z) whose composition reproduces Blender XYZ rotation_euler exactly
   (R = Rz@Ry@Rx), so a pose-bone euler (rx, ry, rz) becomes ctrl values
@@ -43,10 +48,40 @@ if _HERE not in sys.path:
 import humanoid_spec as hs  # noqa: E402
 import humanoid_control as hc  # noqa: E402
 import mjcf_generator  # noqa: E402  (default MJCF path)
+from balance_controller import (BalanceController, MODE_STAND,  # noqa: E402
+                                MODE_GAIT)
 
 import mujoco  # noqa: E402
 
 TICK = 1.0 / 30.0  # twin-control 30 fps drive loop
+
+# contract motions that are gaits (balance mode GAIT + envelope governor)
+GAIT_MOTIONS = ("walk", "run")
+
+# P2-T4 motion envelopes: per-motion target scale for bones whose open-loop
+# amplitude exceeds the robot's closed-loop balance envelope. Nod rocks the
+# heavy helmet (3 kg) at 2.5 rad/s; the reaction pumps the COM backward
+# faster than the ankle/hip strategy can arrest within the short heel margin
+# (~0.10 m), so the physics twin plays nod with a scaled head pitch. This is
+# a documented, telemetry-visible deviation (the Blender bake keeps full
+# amplitude) -- honest physics, not magic. Scale tuned via balance_tune.py.
+MOTION_ENVELOPE = {
+    "nod": {"head": 0.62},
+}
+
+# Per-gait torso (spine/chest) pitch scale. Run leans the torso ~12 deg
+# forward, shifting the COM forward and tipping the robot even when the legs
+# are scaled; scaling the torso lean is required for run. Walk keeps its mild
+# lean (1.0). Documented, telemetry-visible deviation -- honest physics.
+GAIT_TORSO_SCALE = {"walk": 1.0, "run": 0.5}
+
+# Per-gait tuned envelope (gait_scale, gait_tempo) -- balance_tune.py 2026-09.
+# The full-amplitude Blender gait tips this robot within ~0.6 s even with
+# balance feedback; each gait's swing amplitude and cadence are attenuated to
+# stay inside the balance envelope. walk: 12+ s stable (open loop 0.6 s); run:
+# 6+ s stable at (0.2, 0.4). Loaded by start_motion; tests/tuning may override
+# balance.gait_scale/gait_tempo afterwards.
+GAIT_PARAMS = {"walk": (0.3, 0.5), "run": (0.2, 0.4)}
 
 
 # ---------------------------------------------------------------------------
@@ -118,6 +153,11 @@ class PhysicsAdapter(object):
         self.motion_state = {"name": None, "start": 0.0, "duration": 0.0}
         self._targets = {b: (0.0, 0.0, 0.0) for b in hs.BONE_ORDER}
         self._root_loc_target = (0.0, 0.0, 0.0)
+        # P2-T4: closed-loop balance overlay (joint-level PD underneath the
+        # contract; see balance_controller.py for scope & honest limitations)
+        self.balance = BalanceController(self.model, self.data,
+                                         mode=MODE_STAND)
+        self._gait_time = 0.0  # tempo-warped gait clock for walk/run
         self.settle(seconds=0.5)  # drop-settle onto the floor at rest pose
 
     # -- command surface (contract semantics identical to twin_server) ------
@@ -127,16 +167,30 @@ class PhysicsAdapter(object):
         if fn is None:
             return False
         self.motion_state["name"] = None
+        self.balance.set_mode(MODE_STAND)
         fn(self.fake_arm)
         self._capture_targets()
         return True
 
     def start_motion(self, name, duration=3.0):
-        """Time-based motion (idle/wave/walk/nod/look/run)."""
+        """Time-based motion (idle/wave/walk/nod/look/run).
+
+        Gaits (walk/run) switch the balance overlay to GAIT mode and arm the
+        gait-envelope governor; every other motion keeps STAND balance.
+        """
         if name not in hc.MOTION_DRIVERS:
             return False
         self.motion_state.update(name=name, start=self.data.time,
                                  duration=max(0.0, float(duration)))
+        if name in GAIT_MOTIONS:
+            self.balance.set_mode(MODE_GAIT)
+            self._gait_time = 0.0
+            # load the per-gait tuned envelope (tests may override afterwards)
+            gs, gt = GAIT_PARAMS[name]
+            self.balance.gait_scale = gs
+            self.balance.gait_tempo = gt
+        else:
+            self.balance.set_mode(MODE_STAND)
         return True
 
     def drive_bones(self, bones):
@@ -145,6 +199,7 @@ class PhysicsAdapter(object):
             if name not in self._targets:
                 return False
         self.motion_state["name"] = None
+        self.balance.set_mode(MODE_STAND)
         self._targets = {b: (0.0, 0.0, 0.0) for b in hs.BONE_ORDER}
         for name, euler in bones.items():
             self._targets[name] = tuple(float(v) for v in euler)
@@ -153,8 +208,20 @@ class PhysicsAdapter(object):
     def stop(self):
         """Stop any motion and relax all targets to the rest pose."""
         self.motion_state["name"] = None
+        self.balance.set_mode(MODE_STAND)
+        self.balance.reset_state()
         self._targets = {b: (0.0, 0.0, 0.0) for b in hs.BONE_ORDER}
         self._root_loc_target = (0.0, 0.0, 0.0)
+
+    # -- P2-T4 perturbation surface (external forces, honest physics) --------
+    def perturb(self, force, duration=0.1, body="chest"):
+        """Apply a real external force pulse (xfrc_applied) to a body.
+
+        force=(fx, fy, fz) Newtons in the WORLD frame, held for `duration`
+        seconds of sim time. Returns False for an unknown body. Used by the
+        balance acceptance tests to push the robot and watch it recover.
+        """
+        return self.balance.request_push(force, duration, body)
 
     # -- drive loop ----------------------------------------------------------
     def drive_once(self):
@@ -162,6 +229,7 @@ class PhysicsAdapter(object):
         headless contexts, where timers do not fire)."""
         self._apply_motion_targets()
         self._write_ctrl()
+        self.balance.apply()  # P2-T4: closed-loop balance overlay
         t_end = self.data.time + TICK
         while self.data.time < t_end - 1e-9:
             mujoco.mj_step(self.model, self.data)
@@ -180,11 +248,15 @@ class PhysicsAdapter(object):
         reset inside a longer session); only the dynamic state is re-seated.
         """
         self.stop()
+        self.balance.reset_state()
+        self._gait_time = 0.0
         key_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_KEY,
                                    "home")
         if key_id >= 0:
             self.data.qpos[:] = self.model.key_qpos[key_id]
         self.data.qvel[:] = 0.0
+        self.data.xfrc_applied[:] = 0.0
+        self.data.qfrc_applied[:] = 0.0
         mujoco.mj_forward(self.model, self.data)
         self.settle(seconds=settle_seconds)
 
@@ -198,8 +270,50 @@ class PhysicsAdapter(object):
         if dur > 0 and t > dur:
             self.stop()
             return
-        hc.MOTION_DRIVERS[name](self.fake_arm, t)
+        if name in GAIT_MOTIONS:
+            # P2-T4 gait governor: a tempo-warped clock drives the gait so
+            # gait_tempo<1 slows the cadence inside the balance envelope.
+            self._gait_time += TICK * self.balance.gait_tempo
+            sample_t = self._gait_time
+        else:
+            sample_t = t
+        hc.MOTION_DRIVERS[name](self.fake_arm, sample_t)
         self._capture_targets()
+        if name in GAIT_MOTIONS:
+            self._apply_gait_envelope(name)
+        self._apply_motion_envelope(name)
+
+    def _apply_motion_envelope(self, name):
+        """Scale per-bone targets for motions whose open-loop amplitude exceeds
+        the closed-loop balance envelope (see MOTION_ENVELOPE)."""
+        env = MOTION_ENVELOPE.get(name)
+        if not env:
+            return
+        for bone, scale in env.items():
+            rx, ry, rz = self._targets[bone]
+            self._targets[bone] = (rx * scale, ry * scale, rz * scale)
+
+    def _apply_gait_envelope(self, name):
+        """Scale the open-loop gait by balance.gait_scale (+ torso lean).
+
+        The full-amplitude Blender gait exceeds this robot's balance envelope
+        (open loop it tips within ~0.6 s). gait_scale<1 attenuates the thigh/
+        shin/foot swing so the closed-loop ankle/hip PD can keep the trunk up;
+        run additionally needs its forward torso lean scaled (Gait_TORSO_SCALE)
+        or the COM shifts past the toes. Documented, telemetry-visible
+        deviation -- honest physics.
+        """
+        s = self.balance.gait_scale
+        if s != 1.0:
+            for bone in ("thigh.L", "shin.L", "foot.L",
+                         "thigh.R", "shin.R", "foot.R"):
+                rx, ry, rz = self._targets[bone]
+                self._targets[bone] = (rx * s, ry * s, rz * s)
+        ts = GAIT_TORSO_SCALE.get(name, 1.0)
+        if ts != 1.0:
+            for bone in ("spine", "chest"):
+                rx, ry, rz = self._targets[bone]
+                self._targets[bone] = (rx * ts, ry * ts, rz * ts)
 
     def _capture_targets(self):
         for b in hs.BONE_ORDER:
@@ -248,6 +362,8 @@ class PhysicsAdapter(object):
             "root_loc_target": [round(v, 4) for v in self._root_loc_target],
             "max_qvel": round(float(max(abs(v) for v in self.data.qvel)), 4),
             "contacts": contacts,
+            # P2-T4: closed-loop balance overlay telemetry (external view)
+            "balance": self.balance.telemetry(),
         }
 
     def top_contacts(self, n=4):
