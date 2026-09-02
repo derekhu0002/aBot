@@ -11,6 +11,15 @@ the nine baked keyframe Actions ActionRelax/ActionTPose/ActionAPose/
 ActionIdle/ActionWave/ActionWalk/ActionNod/ActionLook/ActionRun, all
 joint-only (pose-bone rotation_euler / FK root location F-curves), with one
 Action already attached to the armature so GUI playback works out of the box.
+
+P2 physics dual outlet (2026-09-02): the same build also regenerates
+humanoid.mjcf from the shared procedural parameters (single source of truth,
+never reverse-engineered from the .blend): the regenerated MJCF must be
+byte-identical to the committed assets/humanoid/humanoid.mjcf, contain the 19
+FK-contract bones by the same names, and the regenerated armature's bone
+frames must match humanoid_spec exactly -- the axial convention ('.L' =
+anatomical right = world -X, head local Y vertical, facing world -Y) is thus
+asserted inside the twin itself, guarding against mirrored rebuilds.
 """
 
 import json
@@ -32,8 +41,40 @@ import bpy, json, sys
 argv = sys.argv[sys.argv.index("--") + 1:]
 bpy.ops.wm.open_mainfile(filepath=argv[0])
 expected = json.loads(argv[1])
+scripts_dir = argv[2] if len(argv) > 2 else None
 arm = bpy.data.objects["HumanoidRig"]
 ad = arm.animation_data
+
+# P2 physics: the armature must match humanoid_spec (single source of truth)
+# bone-for-bone, frame-for-frame -- the axial-convention firewall inside the
+# twin ('.L'=anatomical right=world -X, head local Y vertical, facing -Y).
+spec_frame_bad = []
+if scripts_dir:
+    sys.path.insert(0, scripts_dir)
+    import humanoid_spec as hs
+    if sorted(b.name for b in arm.data.bones) != sorted(hs.BONE_ORDER):
+        spec_frame_bad.append("bone set differs from humanoid_spec")
+    for b in arm.data.bones:
+        spec = hs.BONES.get(b.name)
+        if spec is None:
+            continue
+        for k in range(3):
+            if abs(b.head_local[k] - spec["head"][k]) > 1e-4:
+                spec_frame_bad.append("%s head %s != %s"
+                                      % (b.name, list(b.head_local), spec["head"]))
+            if abs(b.tail_local[k] - spec["tail"][k]) > 1e-4:
+                spec_frame_bad.append("%s tail %s != %s"
+                                      % (b.name, list(b.tail_local), spec["tail"]))
+        cols = [list(b.matrix_local.to_3x3().col[i]) for i in range(3)]
+        for ax in range(3):
+            for k in range(3):
+                if abs(cols[ax][k] - spec["frame"][ax][k]) > 1e-3:
+                    spec_frame_bad.append("%s frame axis %d: %s != %s"
+                                          % (b.name, ax, cols[ax], spec["frame"][ax]))
+        parent = b.parent.name if b.parent else None
+        if parent != spec["parent"]:
+            spec_frame_bad.append("%s parent %s != %s"
+                                  % (b.name, parent, spec["parent"]))
 
 def action_fcurves(act):
     # Blender 4.4+ slotted Actions expose F-curves via layers/strips/
@@ -53,6 +94,7 @@ def action_fcurves(act):
     return curves
 
 facts = {"default": ad.action.name if ad and ad.action else None,
+         "spec_frame_bad": spec_frame_bad,
          "actions": {}}
 for n in expected:
     act = bpy.data.actions.get(n)
@@ -114,14 +156,16 @@ def main():
         failures.append("build log missing SAVED marker")
 
     if not failures:
-        # Verify the regenerated blend ships the baked joint-only Actions.
+        # Verify the regenerated blend ships the baked joint-only Actions and
+        # a spec-matched armature (axial-convention firewall inside the twin).
         with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as fh:
             fh.write(ACTIONS_CHECKER)
             checker_path = fh.name
+        scripts_dir = os.path.join(REPO_ROOT, "scripts", "blender_humanoid")
         try:
             aproc = subprocess.run(
                 [blender, "-b", "-P", checker_path, "--", blend,
-                 json.dumps(ACTION_NAMES)],
+                 json.dumps(ACTION_NAMES), scripts_dir],
                 capture_output=True, text=True, timeout=300)
         finally:
             os.unlink(checker_path)
@@ -130,7 +174,7 @@ def main():
                             % (aproc.returncode, aproc.stderr[-1500:]))
         else:
             line = next((l for l in aproc.stdout.splitlines()
-                         if l.startswith("BUILD_ACTIONS_JSON ")), None)
+                          if l.startswith("BUILD_ACTIONS_JSON ")), None)
             if line is None:
                 failures.append("no BUILD_ACTIONS_JSON in checker output")
             else:
@@ -141,6 +185,9 @@ def main():
                     failures.append("regenerated blend has no default Action "
                                     "attached to the armature (GUI play would "
                                     "show nothing): %r" % afacts.get("default"))
+                for msg in afacts.get("spec_frame_bad", []):
+                    failures.append("armature differs from humanoid_spec "
+                                    "(axial convention at risk): %s" % msg)
                 for n in ACTION_NAMES:
                     info = afacts["actions"].get(n, {})
                     if not info.get("exists"):
@@ -149,11 +196,47 @@ def main():
                         failures.append("baked Action %s is not joint-only "
                                         "(bone rotation / FK root location only)" % n)
 
+    if not failures:
+        # P2 physics dual outlet: the build must also regenerate humanoid.mjcf
+        # from the same procedural parameters, byte-identical to the committed
+        # asset (single source of truth; never reverse-engineered from the
+        # .blend), carrying the 19 FK-contract bones by the same names.
+        import hashlib
+        import xml.etree.ElementTree as ET
+        mjcf = os.path.join(out_dir, "humanoid.mjcf")
+        committed_mjcf = os.path.join(REPO_ROOT, "assets", "humanoid",
+                                      "humanoid.mjcf")
+        if not os.path.exists(mjcf):
+            failures.append("build did not regenerate humanoid.mjcf (dual outlet)")
+        elif "MJCF_WRITTEN" not in proc.stdout:
+            failures.append("build log missing MJCF_WRITTEN marker")
+        else:
+            def _sha(p):
+                h = hashlib.sha256()
+                with open(p, "rb") as fh:
+                    for chunk in iter(lambda: fh.read(65536), b""):
+                        h.update(chunk)
+                return h.hexdigest()
+            if os.path.exists(committed_mjcf) and _sha(mjcf) != _sha(committed_mjcf):
+                failures.append("regenerated humanoid.mjcf is not byte-identical "
+                                "to the committed asset (single-source break)")
+            names = sorted(b.get("name") for b in
+                           ET.parse(mjcf).getroot().findall(".//body"))
+            want = sorted(["root", "spine", "chest", "neck", "head"]
+                          + ["%s.%s" % (s, sd)
+                             for s in ("shoulder", "upper_arm", "forearm",
+                                       "hand", "thigh", "shin", "foot")
+                             for sd in ("L", "R")])
+            if names != want:
+                failures.append("regenerated humanoid.mjcf bodies %s != 19 "
+                                "FK-contract bones" % names)
+
     if failures:
         print("FAIL:\n  - " + "\n  - ".join(failures))
         return 1
     print("PASS: build_humanoid.py reproducibly regenerates blend + previews + "
-          "9 baked joint-only Actions")
+          "9 baked joint-only Actions + byte-identical humanoid.mjcf dual "
+          "outlet with spec-matched axial convention")
     return 0
 
 

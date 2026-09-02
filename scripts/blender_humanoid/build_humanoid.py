@@ -66,19 +66,37 @@ import sys
 import bpy
 from mathutils import Vector
 
-# humanoid_control lives next to this script (shared bake contract)
+# humanoid_control lives next to this script (shared bake contract);
+# humanoid_spec is the single procedural source of truth for the bone tree
+# and physical part anchors (shared with the MJCF outlet, P2 physics).
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 import humanoid_control as hc  # noqa: E402
+import humanoid_spec as hs  # noqa: E402
+import mjcf_generator  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Output paths (ABOT_HUMANOID_OUT_DIR overrides for reproducible test builds)
 # ---------------------------------------------------------------------------
 OUT_DIR = os.environ.get("ABOT_HUMANOID_OUT_DIR", r"D:\Projects\aBot\assets\humanoid")
 BLEND_OUT = os.path.join(OUT_DIR, "humanoid.blend")
+MJCF_OUT = os.path.join(OUT_DIR, "humanoid.mjcf")
 RENDER_FRONT = os.path.join(OUT_DIR, "preview_front.png")
 RENDER_THREEQUARTER = os.path.join(OUT_DIR, "preview_3quarter.png")
+
+# ---------------------------------------------------------------------------
+# Physical part anchors from the single source of truth (humanoid_spec).
+# The .blend render geometry and the .mjcf colliders are siblings under the
+# same procedural parameters; decorative details stay inline below.
+# ---------------------------------------------------------------------------
+_PARTS = {p[0]: p for p in hs.PHYSICAL_PARTS}
+
+
+def _part(name):
+    """(kind, loc, scale, subdiv) for one physical part from the spec."""
+    _n, kind, loc, scale, subdiv = _PARTS[name]
+    return kind, loc, scale, subdiv
 
 # ---------------------------------------------------------------------------
 # Scene helpers
@@ -356,8 +374,18 @@ def build_humanoid():
         parts.append(obj)
         return obj
 
-    # ---- Helmet (oversized head) ------------------------------------------
-    add("sphere", "Helmet", (0.0, 0.0, 0.92), (0.30, 0.30, 0.28), mat_red, subdiv=2)
+    def add_from_spec(spec_name, obj_name, material, sx=1.0, **kw):
+        """Add a physical part whose anchor comes from humanoid_spec.
+
+        `sx` mirrors the x anchor for the '.L' side (spec stores the '.R'/
+        +x side). Decorative extras keep their inline literals.
+        """
+        kind, loc, scale, subdiv = _part(spec_name)
+        return add(kind, obj_name, (loc[0] * sx, loc[1], loc[2]), scale,
+                   material, subdiv=subdiv, **kw)
+
+    # ---- Helmet (oversized head; anchor from humanoid_spec) ---------------
+    add_from_spec("Helmet", "Helmet", mat_red)
     # cream stripe band over the crown (front-to-back)
     stripe = make_torus("HelmetStripe", 0.27, 0.03, mat_cream)
     delete_verts_below(stripe, axis="x", value=0.0)
@@ -411,36 +439,29 @@ def build_humanoid():
         seam.location = (0.0, 0.0, zz)
         parts.append(seam)
 
-    # ---- Torso -------------------------------------------------------------
-    add("cylinder", "Neck", (0.0, 0.0, 0.62), (0.05, 0.05, 0.07), mat_dark, subdiv=1)
-    add("sphere", "Chest", (0.0, 0.0, 0.50), (0.16, 0.12, 0.12), mat_red, subdiv=2)
-    # emissive chest emblem (small upright triangle)
+    # ---- Torso (anchors from humanoid_spec) --------------------------------
+    add_from_spec("Neck", "Neck", mat_dark)
+    add_from_spec("Chest", "Chest", mat_red)
+    # emissive chest emblem (small upright triangle) -- decorative
     add_triangle_outline(parts, "Emblem", (0.0, -0.115, 0.50), 0.06, 0.008,
                          mat_emblem)
-    add("sphere", "Abdomen", (0.0, 0.0, 0.385), (0.11, 0.09, 0.08), mat_maroon,
-        subdiv=2)
-    belt = make_torus("Belt", 0.105, 0.008, mat_cream)
+    add_from_spec("Abdomen", "Abdomen", mat_maroon)
+    belt = make_torus("Belt", 0.105, 0.008, mat_cream)  # decorative
     belt.location = (0.0, 0.0, 0.385)
     parts.append(belt)
-    add("sphere", "Pelvis", (0.0, 0.0, 0.285), (0.12, 0.10, 0.08), mat_maroon,
-        subdiv=2)
+    add_from_spec("Pelvis", "Pelvis", mat_maroon)
 
     # ---- Arms (pauldron -> upper arm -> elbow -> forearm -> hand) ----------
     for side, sx in (("L", -1), ("R", 1)):
         x = sx * 0.185
-        add("sphere", f"Pauldron{side}", (sx * 0.17, 0.0, 0.55),
-            (0.08, 0.08, 0.08), mat_red, subdiv=2)
-        add("cylinder", f"UpperArm{side}", (x, 0.0, 0.48),
-            (0.045, 0.045, 0.09), mat_red, subdiv=2)
-        add("sphere", f"Elbow{side}", (x, 0.0, 0.415),
-            (0.042, 0.042, 0.042), mat_dark, subdiv=2)
-        add("cylinder", f"Forearm{side}", (x, 0.0, 0.35),
-            (0.040, 0.040, 0.08), mat_red, subdiv=2)
+        add_from_spec("Pauldron", f"Pauldron{side}", mat_red, sx=sx)
+        add_from_spec("UpperArm", f"UpperArm{side}", mat_red, sx=sx)
+        add_from_spec("Elbow", f"Elbow{side}", mat_dark, sx=sx)
+        add_from_spec("Forearm", f"Forearm{side}", mat_red, sx=sx)
         add("cylinder", f"Cuff{side}", (x, 0.0, 0.30),
-            (0.046, 0.046, 0.02), mat_cream, subdiv=1)
-        # rounded palm + mechanical fingers (no polyhedral block)
-        add("sphere", f"Palm{side}", (x, -0.005, 0.245),
-            (0.030, 0.026, 0.034), mat_maroon, subdiv=1)
+            (0.046, 0.046, 0.02), mat_cream, subdiv=1)  # decorative
+        # rounded palm (anchor from spec) + mechanical fingers (decorative)
+        add_from_spec("Palm", f"Palm{side}", mat_maroon, sx=sx)
         for fi, dx in enumerate((-0.016, 0.0, 0.016)):
             add("cylinder", f"Finger{side}{fi}", (x + dx, -0.012, 0.205),
                 (0.008, 0.008, 0.022), mat_red,
@@ -452,14 +473,10 @@ def build_humanoid():
     # ---- Legs (thigh -> knee -> shin -> boot) -------------------------------
     for side, sx in (("L", -1), ("R", 1)):
         x = sx * 0.095
-        add("cylinder", f"Thigh{side}", (x, 0.0, 0.215),
-            (0.062, 0.062, 0.08), mat_red, subdiv=2)
-        add("sphere", f"Knee{side}", (x, 0.0, 0.15),
-            (0.05, 0.05, 0.05), mat_dark, subdiv=2)
-        add("cylinder", f"Shin{side}", (x, 0.0, 0.10),
-            (0.052, 0.052, 0.07), mat_red, subdiv=2)
-        add("cube", f"Boot{side}", (x, -0.02, 0.09),
-            (0.09, 0.12, 0.075), mat_red, subdiv=2)
+        add_from_spec("Thigh", f"Thigh{side}", mat_red, sx=sx)
+        add_from_spec("Knee", f"Knee{side}", mat_dark, sx=sx)
+        add_from_spec("Shin", f"Shin{side}", mat_red, sx=sx)
+        add_from_spec("Boot", f"Boot{side}", mat_red, sx=sx)
         add("sphere", f"ToeCap{side}", (x, -0.13, 0.045),
             (0.06, 0.05, 0.045), mat_cream, subdiv=2)
         # rounded gold sole puck (replaces the gray flat plate)
@@ -504,65 +521,19 @@ def add_armature(body):
     bpy.ops.object.mode_set(mode="EDIT")
     eb = arm_data.edit_bones
 
-    root = eb.new("root")
-    root.head = (0.0, 0.0, 0.02)
-    root.tail = (0.0, 0.0, 0.06)
-
-    spine = eb.new("spine")
-    spine.head = (0.0, 0.0, 0.26)
-    spine.tail = (0.0, 0.0, 0.42)
-    spine.parent = root
-
-    chest = eb.new("chest")
-    chest.head = (0.0, 0.0, 0.42)
-    chest.tail = (0.0, 0.0, 0.60)
-    chest.parent = spine
-
-    neck = eb.new("neck")
-    neck.head = (0.0, 0.0, 0.60)
-    neck.tail = (0.0, 0.0, 0.66)
-    neck.parent = chest
-
-    head = eb.new("head")
-    head.head = (0.0, 0.0, 0.66)
-    head.tail = (0.0, 0.0, 1.05)
-    head.parent = neck
-
-    for side, sx in (("L", -1), ("R", 1)):
-        shoulder = eb.new(f"shoulder.{side}")
-        shoulder.head = (sx * 0.04, 0.0, 0.55)
-        shoulder.tail = (sx * 0.16, 0.0, 0.55)
-        shoulder.parent = chest
-
-        uarm = eb.new(f"upper_arm.{side}")
-        uarm.head = (sx * 0.185, 0.0, 0.55)
-        uarm.tail = (sx * 0.185, 0.0, 0.415)
-        uarm.parent = shoulder
-
-        farm = eb.new(f"forearm.{side}")
-        farm.head = (sx * 0.185, 0.0, 0.415)
-        farm.tail = (sx * 0.185, 0.0, 0.30)
-        farm.parent = uarm
-
-        hand = eb.new(f"hand.{side}")
-        hand.head = (sx * 0.185, 0.0, 0.30)
-        hand.tail = (sx * 0.185, 0.0, 0.23)
-        hand.parent = farm
-
-        thigh = eb.new(f"thigh.{side}")
-        thigh.head = (sx * 0.095, 0.0, 0.28)
-        thigh.tail = (sx * 0.095, 0.0, 0.15)
-        thigh.parent = root
-
-        shin = eb.new(f"shin.{side}")
-        shin.head = (sx * 0.095, 0.0, 0.15)
-        shin.tail = (sx * 0.095, 0.0, 0.05)
-        shin.parent = thigh
-
-        foot = eb.new(f"foot.{side}")
-        foot.head = (sx * 0.095, 0.0, 0.05)
-        foot.tail = (sx * 0.095, -0.10, 0.02)
-        foot.parent = shin
+    # Bone tree comes STRAIGHT from humanoid_spec (the single source of
+    # truth shared with the MJCF outlet). Creation order stays the exact
+    # historical one (BONE_CREATE_ORDER) so Blender's roll-0 construction
+    # reproduces the probed bone frames bit-for-bit.
+    made = {}
+    for name in hs.BONE_CREATE_ORDER:
+        spec = hs.BONES[name]
+        b = eb.new(name)
+        b.head = spec["head"]
+        b.tail = spec["tail"]
+        if spec["parent"] is not None:
+            b.parent = made[spec["parent"]]
+        made[name] = b
 
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -862,6 +833,14 @@ def main():
     body = build_humanoid()
     print("== adding armature ==")
     arm = add_armature(body)
+    # P2 physics: MJCF outlet. Same procedural parameters (bone tree / axes /
+    # part geometry / masses) that built the armature above -- a second,
+    # sibling outlet of the single source of truth, never read back from the
+    # .blend. Written before the renders so a failed render cannot leave a
+    # stale physics asset behind.
+    print("== writing MJCF (physics outlet) ==")
+    written = mjcf_generator.write_mjcf(MJCF_OUT)
+    print(f"MJCF_WRITTEN {written}")
     print("== baking key actions ==")
     bake_actions(arm)
     print("== scene + render ==")

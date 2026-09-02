@@ -48,8 +48,18 @@ GUI selection.
 
 import math
 
-import bpy
-from mathutils import Euler
+# bpy / mathutils are only needed by the Blender-side helpers (load_humanoid,
+# MotionTimeline.register). The pose/motion drivers below are pure math over an
+# arm object, so physics_adapter can sample them in plain Python (MuJoCo
+# backend) where bpy is unavailable. Guard the imports accordingly.
+try:
+    import bpy
+except ImportError:  # pragma: no cover - plain-Python (physics) context
+    bpy = None
+try:
+    from mathutils import Euler
+except ImportError:  # pragma: no cover - plain-Python (physics) context
+    Euler = None
 
 FPS = 30
 
@@ -82,10 +92,14 @@ def reset_pose(arm):
 
 
 def set_bone(arm, name, euler=(0.0, 0.0, 0.0), loc=None):
-    """Set a pose bone's local Euler rotation (degrees -> radians optional)."""
+    """Set a pose bone's local Euler rotation (degrees -> radians optional).
+
+    Assigns a plain 3-tuple, which Blender accepts for rotation_euler and the
+    physics FakeArm also understands; mathutils.Euler is only a nicety.
+    """
     p = arm.pose.bones[name]
     p.rotation_mode = "XYZ"
-    p.rotation_euler = Euler(euler)
+    p.rotation_euler = Euler(euler) if Euler is not None else tuple(euler)
     if loc is not None:
         p.location = loc
 
