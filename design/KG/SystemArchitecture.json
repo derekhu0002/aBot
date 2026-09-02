@@ -588,7 +588,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-09-02 第二场）：目标=让用户通过 AGENT 控制亲眼看到 ROBOT 的物理化动作。完成：①physics_twin_server.py——MuJoCo 物理孪生（契约与 twin_server 完全一致 @8124，GUI 模式默认：mujoco.viewer GLFW 视窗 30fps 实时物理，拖拽旋转/滚轮缩放；--headless 服务模式；--frames N 有界冒烟 SMOKE_JSON；/stop 复位直立 home；开环跌倒=诚实物理）；②opencode.json 并列登记 twin-physics MCP（复用 twin_mcp_server.py，TWIN_PORT=8124），重启 opencode 后 AGENT 可控；③twin_mcp_server.py 增加 TWIN_PORT flavor 切换（默认 8123 行为不变）；④验收 test_physics_twin_server.py + KG 用例 twin-control-physics-twin-server-contract @ twin-control-001。commits：5ecea99（代码）+ 16e10e6（图登记）。全绿：仓库回归 19/19、KG 用例 19/19、headless 300帧 up_z=0.9999、GUI 90帧探针 PASS（Windows GLFW 实证可用）。决策：驱动线程单线程 mj_step+HTTP 只入队；帧冒烟 headless 极速、GUI 实时 pacing；/stop=home keyframe 复位。坑：sync() 非阻塞须 is_running()+perf_counter 丢帧式 pacing；无显示环境捕获 GLFW 错误引导 --headless。遗留：T4 平衡反馈（防 walk/run/nod 跌倒）、接触/步态实验（T5）、GitHub push。",
+      "description": "会话总结（2026-09-02 第三场）：目标=让 MuJoCo 物理孪生站稳、走稳（P2-T4 闭环平衡与步态控制）。完成：①T4a 站立平衡——balance_controller.py 关节级纯比例踝/髋/躯干 PD（root 骨盆倾角感测 + 世界轴投影分发）+ 踝通道全身 COM-over-CoP 调节（低通滤波、只数 floor-foot 接触），默认无隐藏力；静站/idle/wave/nod/look 全站立，侧向±150N、前向-150N（超开环包络）、后向+80N 推扰恢复。②T4b 稳定步态——每步态包络：walk scale0.3/tempo0.5、run scale0.2/tempo0.4+躯干×0.5、nod 头×0.62；walk/run 原地 12s+ 不倒（开环 0.6s）。③服务面：契约不变，新增 POST /perturb、GET/POST /balance、/state 含 balance 遥测、跌倒后 auto-reseat；GUI 视窗实测走稳（up_z 0.994）。④验收 test_humanoid_balance.py（headless，开/闭环对照）+ 登记 humanoid-model-001 / twin-control-001 双用例 + 计划 T4a/T4b 进展。回归 20/20、KG 15/15、validate 全绿。关键决策：纯关节力矩不用虚拟助力（物理诚实）；纯 P 控制（微分经柔性足底必失稳）；root 感测+低增益化解『感测快慢 vs 抗动作』矛盾。遗留：倒地动态自起立、导数/COM 速度阻尼、全幅 Blender 步态的真稳定（当前靠包络缩放）——均列为后续；T5 接触/步态量化复测（POC-1）待做。经验：执行器符号/效果必须实测（恒幅 ctrl 看 d(e)/dCOM），推理会错；CoP 未滤波抖动可致命。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -600,7 +600,12 @@
         },
         {
           "name": "lastSummaryAt",
-          "value": "2026-09-02T00:00:00Z"
+          "value": "2026-09-02"
+        },
+        {
+          "name": "commit",
+          "value": "86877e3 / 3f2858e / 17c9923",
+          "description": "P2-T4 closed-loop balance + stable gait (code / graph registration / LTM memory)"
         }
       ]
     },
