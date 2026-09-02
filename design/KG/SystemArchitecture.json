@@ -606,7 +606,7 @@
       "id": "rm-wm-summary-001",
       "name": "robot-modeler T1 会话总结",
       "type": "Business Object",
-      "description": "会话总结（2026-09-02）：目标=执行 P2 物理化计划 T1+T2+T3，给 chibi 数字孪生装上 MuJoCo 真实物理。完成：①humanoid_spec.py 单一事实源（19 骨树+探针实测骨轴+部件锚点+质量预算+104 轴向断言）；②mjcf_generator.py 双出口（humanoid.mjcf 与 .blend 同源、字节确定、每骨 3 铰链精确复现 Blender XYZ euler=Rz@Ry@Rx、54 伺服）；③T2 碰撞原语+19.33kg 配重（2×3kg 靴底配重球，COM=0.302m 支撑多边形内）静站 up_z=1.000；④physics_adapter.py 契约薄适配（第三后端，9 动作零崩溃，状态可 POST /bones 回灌）；⑤build_humanoid.py 重构消费 spec+导出 MJCF；⑥test_humanoid_physics.py 新增+test_humanoid_build.py 扩展，18/18 绿。决策：探针实测不推断轴向；adapter 跑系统 Python 走 /bones 回灌（不往 Blender 塞 mujoco）；walk/run/nod 开环跌倒=诚实物理移交 T4。commit 28b7cc7（代码+资产+测试）+26ca2dd（图登记，M1 达成）。遗留：T4 物理动作复现防摔、T5 接触/步态、T6 参数敏感性、T7 sim2real 标定、GitHub push。经验：MJCF capsule 用 pos+quat+size 无 from/to；共面接触须落位间隙；穿透对要 exclude；关节范围序与输出序要显式映射；头部伺服须近临界阻尼。",
+      "description": "会话总结（2026-09-02 第二场）：目标=让用户通过 AGENT 控制亲眼看到 ROBOT 的物理化动作。完成：①physics_twin_server.py——MuJoCo 物理孪生（契约与 twin_server 完全一致 @8124，GUI 模式默认：mujoco.viewer GLFW 视窗 30fps 实时物理，拖拽旋转/滚轮缩放；--headless 服务模式；--frames N 有界冒烟 SMOKE_JSON；/stop 复位直立 home；开环跌倒=诚实物理）；②opencode.json 并列登记 twin-physics MCP（复用 twin_mcp_server.py，TWIN_PORT=8124），重启 opencode 后 AGENT 可控；③twin_mcp_server.py 增加 TWIN_PORT flavor 切换（默认 8123 行为不变）；④验收 test_physics_twin_server.py + KG 用例 twin-control-physics-twin-server-contract @ twin-control-001。commits：5ecea99（代码）+ 16e10e6（图登记）。全绿：仓库回归 19/19、KG 用例 19/19、headless 300帧 up_z=0.9999、GUI 90帧探针 PASS（Windows GLFW 实证可用）。决策：驱动线程单线程 mj_step+HTTP 只入队；帧冒烟 headless 极速、GUI 实时 pacing；/stop=home keyframe 复位。坑：sync() 非阻塞须 is_running()+perf_counter 丢帧式 pacing；无显示环境捕获 GLFW 错误引导 --headless。遗留：T4 平衡反馈（防 walk/run/nod 跌倒）、接触/步态实验（T5）、GitHub push。",
       "attributes": [
         {
           "name": "memoryTier",
@@ -618,7 +618,7 @@
         },
         {
           "name": "lastSummaryAt",
-          "value": "2026-09-02"
+          "value": "2026-09-02T00:00:00Z"
         }
       ]
     },
@@ -1411,6 +1411,36 @@
           "value": "scripts/blender_humanoid/humanoid_spec.py; scripts/blender_humanoid/mjcf_generator.py; scripts/blender_humanoid/physics_adapter.py; scripts/blender_humanoid/build_humanoid.py; scripts/blender_humanoid/humanoid_control.py; assets/humanoid/humanoid.mjcf; tests/acceptance/test_humanoid_physics.py; tests/acceptance/test_humanoid_build.py"
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260902-physics-twin-server",
+      "name": "建模记忆 2026-09-02 (physics_twin_server 可视化物理孪生 + twin-physics MCP)",
+      "type": "Business Object",
+      "description": "会话记录（2026-09-02，机器人3D建模员）：P2 物理可视化交付——让用户通过 AGENT 控制亲眼看到 ROBOT 的物理化动作。交付 physics_twin_server.py：MuJoCo 物理孪生（默认端口 8124），HTTP 契约与 twin_server 完全一致（GET /health /state；POST /pose /motion /bones /stop），未改动的 twin_client 零代码直连；GUI 模式（默认）用 mujoco.viewer（GLFW）视窗 30fps 实时显示真实物理下的机器人（拖拽旋转/滚轮缩放），动作经 PhysicsAdapter qpos/ctrl 伺服驱动，/stop 复位直立 home keyframe；walk/run/nod 开环可能跌倒=诚实物理（平衡反馈属 P2-T4 后续，代码内注释说明）；--headless 无视窗服务 + --frames N 有界冒烟（SMOKE_JSON：finite/up_z/qpos_changed）供自动化。AGENT 控制链路：opencode.json 并列登记第二个本地 MCP 'twin-physics'（复用同一 twin_mcp_server.py，environment TWIN_PORT=8124）；twin_mcp_server.py 增加 TWIN_PORT 驱动的后端 flavor（端口≠8123 时服务名/指令/启动提示切换为 MuJoCo 物理孪生，默认 8123 行为完全不变，既有测试保持绿）。验收：test_physics_twin_server.py（进程内 headless + 临时端口 + 未改动 TwinClient 驱动：健康/静止 up_z≈1/wave 可观测与自过期//bones 伺服跟踪/stop 复位/未知名容忍 + 子进程 CLI 帧冒烟 + opencode.json 双 MCP 登记检查），KG 用例 twin-control-physics-twin-server-contract 登记于 twin-control-001。回归：仓库 19/19 绿、KG 用例 19/19 绿、headless 300 帧 up_z=0.9999、GUI 90 帧探针 SMOKE PASS。commits：5ecea99（代码+测试+opencode.json）、16e10e6（图登记）。Windows MuJoCo 视窗实证：mujoco 3.12.0 pip wheel + Python 3.13，import mujoco.viewer 无头可导入，launch_passive 成功开 GLFW 窗口并实时 pacing、干净关闭。坑：①viewer.sync() 非阻塞，循环条件必须 is_running()，用 time.perf_counter 累加节拍，落后即丢帧不追帧（防滚雪球）；②无显示/无头环境 launch_passive 抛 GLFW 错误，须捕获并引导 --headless；③mj_step 与伺服目标必须在单驱动线程（HTTP 线程只入队），同 twin_server 的 bpy 线程安全模式；④端口隔离 8123(Blender)/8124(MuJoCo)，MCP flavor 靠 TWIN_PORT 区分，避免 Agent 拿到错误后端的启动提示。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "date",
+          "value": "2026-09-02"
+        },
+        {
+          "name": "commit",
+          "value": "5ecea99",
+          "description": "physics_twin_server.py + acceptance test + opencode.json twin-physics MCP + twin_mcp_server.py flavor; files: scripts/blender_humanoid/physics_twin_server.py, scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_physics_twin_server.py, opencode.json"
+        },
+        {
+          "name": "commit",
+          "value": "16e10e6",
+          "description": "graph registration on twin-control-001 (testcase + commit + description/file_paths); file: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1691,7 +1721,8 @@
         "rm-mem-20260830-baked-actions",
         "rm-mem-20260901-keyboard-control",
         "rm-mem-20260901-twin-mcp-server",
-        "rm-mem-20260902-p2-physics-t123"
+        "rm-mem-20260902-p2-physics-t123",
+        "rm-mem-20260902-physics-twin-server"
       ],
       "included_relationships": []
     },
