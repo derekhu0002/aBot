@@ -1428,6 +1428,36 @@
           "description": "graph registration on twin-control-001 (testcase + commit + description/file_paths); file: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "id": "rm-mem-20260902-balance-t4",
+      "name": "建模记忆 2026-09-02 (P2-T4 闭环平衡与稳定步态)",
+      "type": "Business Object",
+      "description": "会话记录（2026-09-02，机器人3D建模员）：P2-T4 闭环平衡与稳定步态落地（计划 abot-p2-physics-plan-001，commit 86877e3 + 图登记 3f2858e）。交付 balance_controller.py（30fps 契约底层叠加，契约不变）：关节级纯比例（P）踝/髋/躯干反馈，感测 ROOT（骨盆）倾角（root local +Y=up，up_z=xmat[2][1]；cvel[:3]=角速度），校正量按各关节实时世界轴在 world X(pitch)/Y(roll) 上的投影分发；踝通道叠加全身 COM-over-CoP 调节（低通滤波）。默认无隐藏力（可选虚拟助力 assist 默认关并在遥测标注）。物理诚实性：纯关节力矩，无魔法。T4a 结果：静站/idle/wave/nod/look 全站立；侧向±150N、前向-150N（超出开环包络）、后向+80N 推扰全部恢复。T4b 结果：walk(scale0.3/tempo0.5)、run(scale0.2/tempo0.4+躯干×0.5) 原地走/跑 12s+ 不倒（开环 0.6s），nod 头包络 0.62。扰动边界（0.1s 脉冲）：开环侧向±15-20N·s、前向~10-15N·s、后向~8-10N·s（短脚跟）；闭环侧向±150N、前向-150N、后向+80N 恢复，±200N/-200N/+100N 倒（与开环同界）。调出的增益 config B：ankle_pitch1.0 ankle_roll1.0 hip_pitch0.5 hip_roll0.5 trunk_pitch0.8 trunk_roll0.6，全 kd=0。坑（重要，均实证）：①微分项（速度反馈）经柔性足底接触注入能量，所有关节/两种符号都失稳——纯 P 是唯一稳定选择；②用 chest 感测会与上肢动作本身对抗、且近摆动频率泵能；用 root 感测不抗动作但对推扰响应慢——低增益 P+COM 项化解；③离散接触点力加权 CoP 抖动可达~10cm，未滤波会闭环正反馈把踝饱和推倒，必须低通且只数 floor-foot 接触（排除骨盆压靴等自接触）；④踝关节位置/足盒中心都不是零偏置参考，静平衡时 CoP 恰在 COM 正下才是无偏参考；⑤nod 的 3kg 头盔 2.5rad/s 俯仰把 COM 向后泵过短脚跟裕度(~0.10m)，踝/髋来不及拦，须头包络 0.62；⑥start_motion→set_mode 曾深拷贝默认增益覆盖已调参，改为 set_mode 不换增益、步态用 GAIT_ROLL_BOOST 乘子；⑦执行器符号必须实测（恒 0.1rad ctrl 看 d(e)/dCOM），推理会错。决策：纯关节级不用虚拟助力（诚实）；导数/COM速度阻尼与倒地动态自起立列为后续。验收 test_humanoid_balance.py（headless，开/闭环对照证明反馈有效），仓库回归 20/20、KG 用例 15/15 绿。文件：scripts/blender_humanoid/balance_controller.py、balance_tune.py、physics_adapter.py、physics_twin_server.py，tests/acceptance/test_humanoid_balance.py。",
+      "attributes": [
+        {
+          "name": "memoryTier",
+          "value": "T2"
+        },
+        {
+          "name": "status",
+          "value": "ACTIVE"
+        },
+        {
+          "name": "date",
+          "value": "2026-09-02"
+        },
+        {
+          "name": "commit",
+          "value": "86877e3",
+          "description": "P2-T4 closed-loop balance + stable gait; files: scripts/blender_humanoid/balance_controller.py, scripts/blender_humanoid/balance_tune.py, scripts/blender_humanoid/physics_adapter.py, scripts/blender_humanoid/physics_twin_server.py, tests/acceptance/test_humanoid_balance.py"
+        },
+        {
+          "name": "commit",
+          "value": "3f2858e",
+          "description": "graph registration on humanoid-model-001/twin-control-001/abot-p2-physics-plan-001; file: design/KG/SystemArchitecture.json"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1709,7 +1739,8 @@
         "rm-mem-20260901-keyboard-control",
         "rm-mem-20260901-twin-mcp-server",
         "rm-mem-20260902-p2-physics-t123",
-        "rm-mem-20260902-physics-twin-server"
+        "rm-mem-20260902-physics-twin-server",
+        "rm-mem-20260902-balance-t4"
       ],
       "included_relationships": []
     },
