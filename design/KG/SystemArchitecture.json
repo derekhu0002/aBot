@@ -242,7 +242,7 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。2026-09-01 阶段② MCP Server：twin_mcp_server.py 将 twin_client 封装为 FastMCP(stdio) 本地 MCP 'twin-control'（登记于项目级 opencode.json，重启 opencode 生效；前置需 twin_server 运行），工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，校验 pose/motion/骨名与 duration，fk 默认弧度（twin_client 契约，degrees=True 自动换算），twin_server 未运行时各工具返回含启动命令的 ok=false 错误而不崩溃，set_client/create_server(client=...) 注入 client 可测，TWIN_HOST/TWIN_PORT 环境变量覆盖端点。2026-09-02 物理孪生服务 physics_twin_server.py：带可视窗口的 MuJoCo 物理孪生——在 127.0.0.1:8124 提供与 twin_server 完全一致的 HTTP 契约（GET /health /state；POST /pose /motion /bones /stop；未改动的 twin_client 零代码直连），GUI 模式（默认）用 mujoco.viewer（GLFW）视窗 30fps 实时显示真实物理下的机器人（拖拽旋转/滚轮缩放；walk/run/nod 开环回放可能跌倒=诚实物理，平衡反馈属 P2-T4 后续），动作经 PhysicsAdapter qpos/ctrl position 伺服驱动，/stop 复位直立 home keyframe；--headless 无视窗服务模式 + --frames N 有界冒烟（SMOKE_JSON 有限性/站立/qpos 变化）供自动化。opencode.json 并列登记第二个本地 MCP 'twin-physics'（复用同一 twin_mcp_server.py，environment TWIN_PORT=8124，重启 opencode 后 AGENT 即可驱动物理孪生）；twin_mcp_server.py 增加 TWIN_PORT 端点驱动的后端 flavor（端口≠8123 时服务名/指令/启动提示切换为 MuJoCo 物理孪生，默认行为不变）。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py, twin_mcp_server.py, physics_twin_server.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）、tests/acceptance/test_twin_mcp_server.py（MCP Server 契约）、tests/acceptance/test_physics_twin_server.py（物理孪生服务契约）。",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。2026-09-01 阶段② MCP Server：twin_mcp_server.py 将 twin_client 封装为 FastMCP(stdio) 本地 MCP 'twin-control'（登记于项目级 opencode.json，重启 opencode 生效；前置需 twin_server 运行），工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，校验 pose/motion/骨名与 duration，fk 默认弧度（twin_client 契约，degrees=True 自动换算），twin_server 未运行时各工具返回含启动命令的 ok=false 错误而不崩溃，set_client/create_server(client=...) 注入 client 可测，TWIN_HOST/TWIN_PORT 环境变量覆盖端点。2026-09-02 物理孪生服务 physics_twin_server.py：带可视窗口的 MuJoCo 物理孪生——在 127.0.0.1:8124 提供与 twin_server 完全一致的 HTTP 契约（GET /health /state；POST /pose /motion /bones /stop；未改动的 twin_client 零代码直连），GUI 模式（默认）用 mujoco.viewer（GLFW）视窗 30fps 实时显示真实物理下的机器人（拖拽旋转/滚轮缩放；walk/run/nod 开环回放可能跌倒=诚实物理，平衡反馈属 P2-T4 后续），动作经 PhysicsAdapter qpos/ctrl position 伺服驱动，/stop 复位直立 home keyframe；--headless 无视窗服务模式 + --frames N 有界冒烟（SMOKE_JSON 有限性/站立/qpos 变化）供自动化。opencode.json 并列登记第二个本地 MCP 'twin-physics'（复用同一 twin_mcp_server.py，environment TWIN_PORT=8124，重启 opencode 后 AGENT 即可驱动物理孪生）；twin_mcp_server.py 增加 TWIN_PORT 端点驱动的后端 flavor（端口≠8123 时服务名/指令/启动提示切换为 MuJoCo 物理孪生，默认行为不变）。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py, twin_mcp_server.py, physics_twin_server.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）、tests/acceptance/test_twin_mcp_server.py（MCP Server 契约）、tests/acceptance/test_physics_twin_server.py（物理孪生服务契约）。2026-09-02 可选外部模型 --model unitree_h1：physics_twin_server.py 经 menagerie_h1.H1Adapter 加载 MuJoCo Menagerie Unitree H1（完整真实人形，同命令面契约不变）：加载时把 Menagerie motor 执行器转为原生 position 伺服（伺服速率反馈，原力矩限幅保留），30Hz 慢环经 H1StandController 调目标（骨盆倾角纯比例 + COM 速度制动 + COM-over-CoP）保持站立；idle/wave/look 可播、原始关节名 FK（left/right_hip_*、knee、ankle、torso、shoulder_*、elbow）；walk/run/nod 诚实拒绝（需训练策略/无颈关节），后向推超足跟力臂会倒（诚实物理）；资产经 scripts/fetch_menagerie.py 拉取（重型网格 .gitignore）。验收：tests/acceptance/test_h1_model.py（headless，详见 unitree-h1-model-001）。",
       "attributes": [
         {
           "name": "commit",
@@ -266,7 +266,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; scripts/blender_humanoid/physics_adapter.py; tests/acceptance/test_humanoid_physics.py; scripts/blender_humanoid/physics_twin_server.py; tests/acceptance/test_physics_twin_server.py; opencode.json; scripts/blender_humanoid/balance_controller.py; scripts/blender_humanoid/balance_tune.py; tests/acceptance/test_humanoid_balance.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; scripts/blender_humanoid/physics_adapter.py; tests/acceptance/test_humanoid_physics.py; scripts/blender_humanoid/physics_twin_server.py; tests/acceptance/test_physics_twin_server.py; opencode.json; scripts/blender_humanoid/balance_controller.py; scripts/blender_humanoid/balance_tune.py; tests/acceptance/test_humanoid_balance.py; scripts/blender_humanoid/menagerie_h1.py; tests/acceptance/test_h1_model.py; scripts/fetch_menagerie.py"
         },
         {
           "name": "commit",
@@ -306,6 +306,11 @@
           "name": "commit",
           "value": "86877e3",
           "description": "P2-T4: closed-loop balance overlay beneath the UNCHANGED twin-control contract on the MuJoCo physics twin -- BalanceController (joint-level proportional ankle/hip/trunk PD on pelvis tilt + COM-over-CoP regulation; no hidden forces by default, labeled optional assist) runs every 30fps tick; physics_adapter gains perturb() + per-gait/nod envelopes; physics_twin_server gains POST /perturb, GET/POST /balance, balance telemetry in /state, auto-reseat after a fall; walk/run/nod now stand/walk via documented envelopes instead of open-loop falls; acceptance test_humanoid_balance.py headless; files: scripts/blender_humanoid/balance_controller.py, physics_adapter.py, physics_twin_server.py, balance_tune.py, tests/acceptance/test_humanoid_balance.py"
+        },
+        {
+          "name": "commit",
+          "value": "5ad1177",
+          "description": "optional --model unitree_h1 on physics_twin_server (H1Adapter same contract; position-servo conversion + stand holder; walk/run/nod honestly rejected); files: scripts/blender_humanoid/menagerie_h1.py, scripts/blender_humanoid/physics_twin_server.py, scripts/fetch_menagerie.py, tests/acceptance/test_h1_model.py, assets/menagerie/unitree_h1/{scene.xml,h1.xml,LICENSE,README.md,CHANGELOG.md}, assets/menagerie/unitree_h1.md, .gitignore"
         }
       ],
       "testcases": [
@@ -343,6 +348,19 @@
           "description": "GIVEN MuJoCo 物理孪生 loopback 无头运行且 balance_controller 闭环平衡作为底层叠加（契约不变）WHEN HTTP 施加 /perturb 外力、GET/POST /balance 并播放动作与步态 THEN 扰动后恢复直立、/balance 返回 config+telemetry 且 patch 生效、balance 遥测出现在 /state、auto_reseat 可控、既有契约不破坏——外部视角、无 GUI、无外部网络。",
           "name": "twin-control-closed-loop-balance-service",
           "type": "Acceptance Test"
+        },
+        {
+          "Input": "assets/menagerie/unitree_h1/（scene.xml+h1.xml+LICENSE；重型网格经 scripts/fetch_menagerie.py 可复现）+ scripts/blender_humanoid/menagerie_h1.py + physics_twin_server.py --model unitree_h1",
+          "acceptanceCriteria": "tests/acceptance/test_h1_model.py",
+          "description": "GIVEN 仓库含 MuJoCo Menagerie Unitree H1 资产（缺失时经 scripts/fetch_menagerie.py 拉取）与 menagerie_h1.py WHEN 无头用 MuJoCo 加载 scene.xml 并施加站立保持、驱动原始关节 FK 与动作、在临时 loopback 端口走 HTTP 契约、并对 H1 与默认模型跑 CLI 冒烟 THEN 模型可加载且为完整人形（nbody≥21/njnt≥20/nq≥26/nu=19、home keyframe、LICENSE 含 Unitree BSD-3-Clause）、站立保持量化稳定（settle 后 up_z>0.98、6s 静站 min_up>0.95、状态有限、漂移<0.1m）、可驱动（FK 伺服跟踪、wave 可观测且保持站立、walk/run/nod 诚实拒绝）、契约与默认 chibi 链路不回归（health bones=19、CLI 冒烟 SMOKE PASS、默认模型仍为 humanoid.mjcf）——外部视角、无 GUI、无外部网络。",
+          "name": "twin-control-unitree-h1-optional-model",
+          "type": "Acceptance Test"
+        }
+      ],
+      "subdiagram_views": [
+        {
+          "view_id": "view-h1-model-001",
+          "view_name": "Unitree H1 外部模型（物理孪生可选）"
         }
       ]
     },
@@ -1505,6 +1523,40 @@
           "description": "graph registration on humanoid-model-001/twin-control-001/abot-p2-physics-plan-001; file: design/KG/SystemArchitecture.json"
         }
       ]
+    },
+    {
+      "id": "unitree-h1-model-001",
+      "name": "Unitree H1 人形模型 (MuJoCo Menagerie)",
+      "type": "Artifact",
+      "description": "外部完整真实人形模型：DeepMind MuJoCo Menagerie 的 Unitree H1（19 驱动关节 + 浮动基座，nq=26/njnt=20/nbody=21，home keyframe 微屈站姿，足底三段胶囊），经浅克隆+稀疏检出放入 assets/menagerie/unitree_h1/（scene.xml 含地面/光源/home；h1.xml 为模型本体；STL 网格与文档图约 17MB 二进制走 .gitignore，经 scripts/fetch_menagerie.py 可复现拉取，文本核心 XML/LICENSE/README 入库）。许可证：Menagerie 仓库 Apache-2.0，unitree_h1 模型内容为 Unitree Robotics BSD-3-Clause（LICENSE 已从仓库根 digest 精确提取入库）。接入物理孪生：physics_twin_server.py --model unitree_h1（默认仍是 chibi humanoid.mjcf），menagerie_h1.py 的 H1Adapter 与 chibi PhysicsAdapter 同命令面。控制架构（物理诚实，仅关节力矩，无隐藏力）：①加载时把 Menagerie motor 执行器在内存中转为 MuJoCo 原生 position 伺服（kp hip400/knee600/ankle200/torso200/shoulder100/elbow50 + 内阻尼，原 ctrlrange 保留为力矩限幅）——伺服速率反馈是稳定关键，30Hz 外力矩环实测 1s 内失稳；② 30Hz 慢环只调位置目标：H1StandController 站立保持=骨盆倾角纯比例（踝/髋pitch/髋roll 通道，符号实测）+全身 COM 速度制动+COM-over-CoP 踝调节（无漂静站）。实测包络：静站 60s up_z≈0.999 漂移<2cm；keyframe 3cm 落位不摔；wave/look/idle 可播且全程站立；推扰恢复前向≤150N·0.1s、横向≤±250N·0.1s；后向推不可恢复（足跟仅 3.5cm 力臂，诚实物理）；walk/run 需训练策略、H1 无颈关节故 nod 不支持（诚实边界，健康检查与文档均标注）。可驱动关节名（/bones 与 /state）：left/right_hip_yaw|hip_roll|hip_pitch|knee|ankle、torso、left/right_shoulder_pitch|shoulder_roll|shoulder_yaw|elbow。验收 tests/acceptance/test_h1_model.py（headless：加载完整性/站立量化/可驱动/契约与默认链路不回归，缺资产时自动经 fetch 脚本拉取）。",
+      "testcases": [
+        {
+          "name": "unitree-h1-model-physics-integrity",
+          "type": "Acceptance Test",
+          "Input": "assets/menagerie/unitree_h1/（scene.xml+h1.xml+LICENSE；重型网格经 scripts/fetch_menagerie.py 可复现）+ scripts/blender_humanoid/menagerie_h1.py + physics_twin_server.py --model unitree_h1",
+          "acceptanceCriteria": "tests/acceptance/test_h1_model.py",
+          "description": "GIVEN 仓库含 MuJoCo Menagerie Unitree H1 资产（缺失时经 scripts/fetch_menagerie.py 拉取）与 menagerie_h1.py WHEN 无头用 MuJoCo 加载 scene.xml 并施加站立保持、驱动原始关节 FK 与动作、在临时 loopback 端口走 HTTP 契约、并对 H1 与默认模型跑 CLI 冒烟 THEN 模型可加载且为完整人形（nbody≥21/njnt≥20/nq≥26/nu=19、home keyframe、LICENSE 含 Unitree BSD-3-Clause）、站立保持量化稳定（settle 后 up_z>0.98、6s 静站 min_up>0.95、状态有限、漂移<0.1m）、可驱动（FK 伺服跟踪、wave 可观测且保持站立、walk/run/nod 诚实拒绝）、契约与默认 chibi 链路不回归（health bones=19、CLI 冒烟 SMOKE PASS、默认模型仍为 humanoid.mjcf）——外部视角、无 GUI、无外部网络。"
+        }
+      ],
+      "attributes": [
+        {
+          "name": "file_paths",
+          "value": "assets/menagerie/unitree_h1.md; assets/menagerie/unitree_h1/scene.xml; assets/menagerie/unitree_h1/h1.xml; assets/menagerie/unitree_h1/LICENSE; assets/menagerie/unitree_h1/README.md; scripts/fetch_menagerie.py; scripts/blender_humanoid/menagerie_h1.py; tests/acceptance/test_h1_model.py; .gitignore"
+        },
+        {
+          "name": "license",
+          "value": "Menagerie repo Apache-2.0; unitree_h1 model content BSD-3-Clause (Unitree Robotics) -- extracted digest committed at assets/menagerie/unitree_h1/LICENSE"
+        },
+        {
+          "name": "deliveryStatus",
+          "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "5ad1177",
+          "description": "MuJoCo Menagerie unitree_h1 integration: fetch script + assets text core + H1Adapter/stand controller + physics_twin_server --model option + acceptance test; files: scripts/fetch_menagerie.py, assets/menagerie/unitree_h1.md, assets/menagerie/unitree_h1/{scene.xml,h1.xml,LICENSE,README.md,CHANGELOG.md}, scripts/blender_humanoid/menagerie_h1.py, scripts/blender_humanoid/physics_twin_server.py, tests/acceptance/test_h1_model.py, .gitignore"
+        }
+      ]
     }
   ],
   "relationships": [
@@ -1677,6 +1729,17 @@
       "target_id": "tech-eval-desktop-humanoid-assembly-001",
       "target_name": "技术评估意见 桌面人形物理组装与BOM选型 (2026-09-01)",
       "type": "Association"
+    },
+    {
+      "id": "rel-twin-control-uses-unitree-h1",
+      "type": "Access",
+      "source_id": "twin-control-001",
+      "target_id": "unitree-h1-model-001",
+      "source_name": "数字孪生本地操控服务 (Twin Control)",
+      "target_name": "Unitree H1 人形模型 (MuJoCo Menagerie)",
+      "name": "物理孪生以 --model unitree_h1 加载并驱动 H1",
+      "statement": "数字孪生本地操控服务 (Twin Control) --(Access)--> Unitree H1 人形模型 (MuJoCo Menagerie)",
+      "description": "physics_twin_server.py --model unitree_h1；契约不变（/health /state /pose /motion /bones /stop），H1 特有：原始关节名 FK、walk/run/nod 诚实拒绝、后向推超出足跟力臂会倒。"
     }
   ],
   "views": [
@@ -1901,6 +1964,19 @@
       "parent_element_id": "tech-evaluator-001",
       "view_id": "tech-evaluator-wm-001",
       "view_name": "技术评估师工作记忆"
+    },
+    {
+      "view_id": "view-h1-model-001",
+      "view_name": "Unitree H1 外部模型（物理孪生可选）",
+      "parent_element_id": "twin-control-001",
+      "description": "物理孪生可选外部模型 Unitree H1（MuJoCo Menagerie）的资产、接入与控制要素子视图，挂于 twin-control-001 下。",
+      "included_elements": [
+        "unitree-h1-model-001",
+        "twin-control-001"
+      ],
+      "included_relationships": [
+        "rel-twin-control-uses-unitree-h1"
+      ]
     }
   ]
 }
