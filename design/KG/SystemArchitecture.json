@@ -230,7 +230,7 @@
       "id": "twin-control-001",
       "name": "数字孪生本地操控服务 (Twin Control)",
       "type": "Application Service",
-      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。2026-09-01 阶段② MCP Server：twin_mcp_server.py 将 twin_client 封装为 FastMCP(stdio) 本地 MCP 'twin-control'（登记于项目级 opencode.json，重启 opencode 生效；前置需 twin_server 运行），工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，校验 pose/motion/骨名与 duration，fk 默认弧度（twin_client 契约，degrees=True 自动换算），twin_server 未运行时各工具返回含启动命令的 ok=false 错误而不崩溃，set_client/create_server(client=...) 注入 client 可测，TWIN_HOST/TWIN_PORT 环境变量覆盖端点。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py, twin_mcp_server.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）、tests/acceptance/test_twin_mcp_server.py（MCP Server 契约）。",
+      "description": "Blender 侧本地控制服务（HTTP 127.0.0.1:8123）+ Agent 侧客户端库：同一台机器上的 Agent 进程可实时操控数字孪生模型——静态姿势（relax/tpose/apose）、时间动作（idle/wave/walk/nod/look/run）、原始 FK 骨骼驱动、模型状态回读；30fps 主线程驱动。wave 已校准（前臂 local Z ∓90 折起向上、手部摆动），run 为高阶原地跑动作；render_action_evidence.py 以统一前相机输出 9 个关键动作证据图 action_<name>.png 并打印 ACTION_FACTS 外部可观测量。2026-09-01 新增键盘控制入口 keyboard_control.py：key_to_command 纯函数单键映射（空格=idle、1=relax、2=tpose、3=apose、4=wave、5=nod、6=look、7=walk、8=run、9=apose、0=stop、h=帮助、q=退出；KEY_MAP 单一事实源、帮助屏由其生成），标准库平台监听（Windows msvcrt / POSIX termios-tty，非 TTY 回退行读取），health 预检后逐键映射为 TwinClient 调用，连接失败时清晰提示服务端启动命令并以码 1 退出。2026-09-01 阶段② MCP Server：twin_mcp_server.py 将 twin_client 封装为 FastMCP(stdio) 本地 MCP 'twin-control'（登记于项目级 opencode.json，重启 opencode 生效；前置需 twin_server 运行），工具集 pose(name)/motion(name,duration)/fk(bone,x,y,z[,degrees])/stop()/state()/health()，校验 pose/motion/骨名与 duration，fk 默认弧度（twin_client 契约，degrees=True 自动换算），twin_server 未运行时各工具返回含启动命令的 ok=false 错误而不崩溃，set_client/create_server(client=...) 注入 client 可测，TWIN_HOST/TWIN_PORT 环境变量覆盖端点。2026-09-02 物理孪生服务 physics_twin_server.py：带可视窗口的 MuJoCo 物理孪生——在 127.0.0.1:8124 提供与 twin_server 完全一致的 HTTP 契约（GET /health /state；POST /pose /motion /bones /stop；未改动的 twin_client 零代码直连），GUI 模式（默认）用 mujoco.viewer（GLFW）视窗 30fps 实时显示真实物理下的机器人（拖拽旋转/滚轮缩放；walk/run/nod 开环回放可能跌倒=诚实物理，平衡反馈属 P2-T4 后续），动作经 PhysicsAdapter qpos/ctrl position 伺服驱动，/stop 复位直立 home keyframe；--headless 无视窗服务模式 + --frames N 有界冒烟（SMOKE_JSON 有限性/站立/qpos 变化）供自动化。opencode.json 并列登记第二个本地 MCP 'twin-physics'（复用同一 twin_mcp_server.py，environment TWIN_PORT=8124，重启 opencode 后 AGENT 即可驱动物理孪生）；twin_mcp_server.py 增加 TWIN_PORT 端点驱动的后端 flavor（端口≠8123 时服务名/指令/启动提示切换为 MuJoCo 物理孪生，默认行为不变）。文件：scripts/blender_humanoid/twin_server.py, twin_client.py, demo_agent.py, humanoid_control.py, calibrate_poses.py, render_action_evidence.py, keyboard_control.py, twin_mcp_server.py, physics_twin_server.py；验收：tests/acceptance/test_humanoid_actions.py（动作契约）、tests/acceptance/test_keyboard_control.py（键盘映射契约）、tests/acceptance/test_twin_mcp_server.py（MCP Server 契约）、tests/acceptance/test_physics_twin_server.py（物理孪生服务契约）。",
       "attributes": [
         {
           "name": "commit",
@@ -254,7 +254,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; scripts/blender_humanoid/physics_adapter.py; tests/acceptance/test_humanoid_physics.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; scripts/blender_humanoid/physics_adapter.py; tests/acceptance/test_humanoid_physics.py; scripts/blender_humanoid/physics_twin_server.py; tests/acceptance/test_physics_twin_server.py; opencode.json"
         },
         {
           "name": "commit",
@@ -284,6 +284,11 @@
           "name": "commit",
           "value": "28b7cc7",
           "description": "P2-T3: physics_adapter.py added as the third (backend=sim) MuJoCo backend behind the UNCHANGED twin-control contract -- pose/motion/FK -> qpos/ctrl, MuJoCo qpos/qvel/contact -> contract state pushable to twin_server POST /bones for Blender feedback, manual drive_once headless; 9 contract motions drive w/o crash, idle/look/wave/relax/tpose/apose stand upright; files: scripts/blender_humanoid/physics_adapter.py, tests/acceptance/test_humanoid_physics.py"
+        },
+        {
+          "name": "commit",
+          "value": "5ecea99",
+          "description": "P2: MuJoCo physics twin with a visible window -- physics_twin_server.py serves the UNCHANGED twin-control HTTP contract on :8124 (GUI mujoco.viewer GLFW window, 30fps real physics; pose/motion/FK -> PhysicsAdapter qpos/ctrl servos; walk/run/nod open-loop falls = honest physics, balance feedback is P2-T4; /stop re-seats upright home; --headless + --frames N bounded smoke SMOKE_JSON); opencode.json registers parallel 'twin-physics' MCP (same twin_mcp_server.py wrapper, TWIN_PORT=8124); twin_mcp_server.py gains TWIN_PORT-driven backend flavor (default :8123 behavior unchanged); acceptance test_physics_twin_server.py (unmodified TwinClient over loopback; standing up_z~=1; wave observable/expiring; stop resets; CLI smoke finite+standing; dual-MCP registration); regression 19/19 green; files: scripts/blender_humanoid/physics_twin_server.py, scripts/blender_humanoid/twin_mcp_server.py, tests/acceptance/test_physics_twin_server.py, opencode.json"
         }
       ],
       "testcases": [
@@ -306,6 +311,13 @@
           "acceptanceCriteria": "tests/acceptance/test_twin_mcp_server.py",
           "description": "GIVEN 仓库含 scripts/blender_humanoid/twin_mcp_server.py（FastMCP stdio 封装 twin_client，set_client/create_server(client=...) 可注入 client，带 `if __name__ == \"__main__\"` 保护，import 不启动 stdio 服务）WHEN 在无 Blender/GUI/网络环境下导入模块并注入桩 client，经 FastMCP 面列出工具、直接及经 mcp.call_tool 调用各工具 handler THEN 工具集恰为 {pose, motion, fk, stop, state, health} 且均带 Agent 可读 description，各 handler 正确转发 twin_client 契约（pose('relax')→set_pose('relax')；motion('walk',5)→start_motion('walk',5.0)；fk('head',x,y,z)→drive_bones({'head':[x,y,z]}) 弧度契约、degrees=True 换算为弧度；stop()→stop()；state() 回读模型状态；health() 回读可达性与模型信息），非法 pose/动作名/骨名或 duration≤0 返回清晰 ok=false 错误且不调用 client，client 失败被转换为含启动命令（blender --python scripts/blender_humanoid/twin_server.py）的 ok=false 错误而不崩溃，端点支持 TWIN_HOST/TWIN_PORT 环境变量覆盖（默认 127.0.0.1:8123）——外部视角、无网络、无 GUI。",
           "name": "twin-control-mcp-server-contract",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "scripts/blender_humanoid/physics_twin_server.py + scripts/blender_humanoid/twin_client.py（未改动）+ opencode.json",
+          "acceptanceCriteria": "tests/acceptance/test_physics_twin_server.py",
+          "description": "GIVEN 仓库含 physics_twin_server.py（MuJoCo 物理孪生：在 PhysicsAdapter 之上提供与 twin_server 一致的 HTTP 契约，默认 GUI 视窗/--headless 自动化模式）与未改动的 stdlib twin_client.py WHEN 在无 GUI/无外部网络环境进程内 headless 启动物理孪生（127.0.0.1 loopback 临时端口 + 驱动线程）并用未改动的 TwinClient 驱动，另以子进程运行 CLI 有界 headless 帧冒烟 THEN 契约可用（/health 返回 ok/backend=sim/19 骨，/state 返回 bones+motion 及 root.up_z 等物理扩展，/pose /motion /bones /stop 返回与 twin_server 一致的 queued ack），set_pose('relax') 后静止站立 up_z≈1，wave 动作经 /state 可观测（motion='wave'、骨欧拉角随时间变化、到时自动结束且保持直立），/bones 头部俯仰伺服跟踪 0.3rad，/stop 清除动作并恢复静止直立，未知 pose/motion 名被容忍不崩溃，CLI --headless --frames N 跑 N 帧不崩溃/有限/站立 up_z≈1 且 qpos 有变化；且 opencode.json 并列登记 'twin-control' 与 'twin-physics'（复用同一 twin_mcp_server.py，environment TWIN_PORT=8124，enabled）——外部视角、无 GUI、无外部网络。",
+          "name": "twin-control-physics-twin-server-contract",
           "type": "Acceptance Test"
         }
       ]
