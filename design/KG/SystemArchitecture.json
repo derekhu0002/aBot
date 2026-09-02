@@ -127,11 +127,18 @@
       ],
       "testcases": [
         {
-          "name": "humanoid-model-robot-restyle-rig-integrity",
-          "type": "Acceptance Test",
-          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%、预览为 1280x1280 PNG；且第二轮差距修复外部几何成立：脚下无深灰平板（z<0.025 无 DarkJoint 顶点）、手部区域顶点数 ≥300（圆润手+手指）、面罩前屏顶点椭球半径比落在 [0.99,1.10]（贴合头部曲率）、眼半径比 ≤1.10（不凸出悬浮）、面罩前侧有金/奶油包边顶点、面罩材质含扫描线 wave 节点。",
           "Input": "assets/humanoid/humanoid.blend + preview_front.png + preview_3quarter.png",
-          "acceptanceCriteria": "tests/acceptance/test_humanoid_model.py"
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_model.py",
+          "description": "GIVEN 仓库含 build_humanoid.py 重建后的 assets/humanoid/humanoid.blend 与预览图 WHEN 用无头 Blender 外部检查产物 THEN HumanoidRig 含 twin-control 全部 FK 骨名、Humanoid_Body 已蒙皮（armature modifier + 每骨顶点组）、材质含金属红躯体/近黑高光面罩/绿色自发光眼/奶油金饰条、head 骨主导顶点跨度 ≥ 总高 30%、预览为 1280x1280 PNG；且第二轮差距修复外部几何成立：脚下无深灰平板、手部区域顶点数 ≥300、面罩前屏顶点椭球半径比落在 [0.99,1.10]、眼半径比 ≤1.10、面罩前侧有金/奶油包边顶点、面罩材质含扫描线 wave 节点。",
+          "name": "humanoid-model-robot-restyle-rig-integrity",
+          "type": "Acceptance Test"
+        },
+        {
+          "Input": "assets/humanoid/humanoid.mjcf + scripts/blender_humanoid/humanoid_spec.py + mjcf_generator.py",
+          "acceptanceCriteria": "tests/acceptance/test_humanoid_physics.py",
+          "description": "GIVEN build_humanoid 从单一事实源 humanoid_spec.py 生成 humanoid.mjcf WHEN 用 MuJoCo 加载并校验 THEN mjcf 可加载且含 19 个 FK 同名体/关节、轴向断言通过（.L=解剖学右=world -X、竖直链 local Y=+Z、面朝 -Y、左右镜像）、碰撞体为原语（sphere/capsule/box）、显式质量配重（COM 落在足部支撑多边形内）、静态站立（up_z≈1）6 秒不倒不发散。",
+          "name": "humanoid-model-mjcf-physics-integrity",
+          "type": "Acceptance Test"
         }
       ]
     },
