@@ -68,7 +68,7 @@
         },
         {
           "name": "file_paths",
-          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/preview_closeup_visor.png; assets/humanoid/preview_closeup_hand.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py; assets/humanoid/action_relax.png; assets/humanoid/action_tpose.png; assets/humanoid/action_apose.png; assets/humanoid/action_idle.png; assets/humanoid/action_wave.png; assets/humanoid/action_walk.png; assets/humanoid/action_nod.png; assets/humanoid/action_look.png; assets/humanoid/action_run.png"
+          "value": "assets/humanoid/humanoid.blend; assets/humanoid/preview_front.png; assets/humanoid/preview_3quarter.png; assets/humanoid/preview_closeup_visor.png; assets/humanoid/preview_closeup_hand.png; assets/humanoid/reference_target.png; scripts/blender_humanoid/build_humanoid.py; tests/acceptance/test_humanoid_model.py; tests/acceptance/test_humanoid_build.py; assets/humanoid/action_relax.png; assets/humanoid/action_tpose.png; assets/humanoid/action_apose.png; assets/humanoid/action_idle.png; assets/humanoid/action_wave.png; assets/humanoid/action_walk.png; assets/humanoid/action_nod.png; assets/humanoid/action_look.png; assets/humanoid/action_run.png; assets/humanoid/humanoid.mjcf; scripts/blender_humanoid/humanoid_spec.py"
         },
         {
           "name": "commit",
@@ -118,6 +118,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "28b7cc7",
+          "description": "P2-T1/T2: humanoid gains its physics representation -- humanoid.mjcf dual outlet from the single procedural source (19 FK bones, primitives-only colliders, 19.33kg chibi mass budget w/ boot ballast, COM inside support polygon, MuJoCo static standing upright); files: assets/humanoid/humanoid.mjcf, scripts/blender_humanoid/humanoid_spec.py, scripts/blender_humanoid/mjcf_generator.py"
         }
       ],
       "testcases": [
@@ -163,7 +168,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; scripts/blender_humanoid/build_humanoid.py; scripts/blender_humanoid/humanoid_spec.py; scripts/blender_humanoid/mjcf_generator.py; tests/acceptance/test_humanoid_build.py; tests/acceptance/test_humanoid_physics.py"
         },
         {
           "name": "commit",
@@ -178,6 +183,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "28b7cc7",
+          "description": "P2-T1: build pipeline refactored to consume humanoid_spec (single source of truth) for armature + physical part anchors, and gains the MJCF dual outlet (byte-identical, never from .blend); axial-convention firewall asserted inside the regenerated twin; files: scripts/blender_humanoid/build_humanoid.py, humanoid_spec.py, mjcf_generator.py, tests/acceptance/test_humanoid_build.py"
         }
       ],
       "testcases": [
@@ -237,7 +247,7 @@
         },
         {
           "name": "file_paths",
-          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py"
+          "value": "scripts/blender_humanoid/humanoid_control.py; scripts/blender_humanoid/demo_agent.py; tests/acceptance/test_humanoid_actions.py; scripts/blender_humanoid/keyboard_control.py; tests/acceptance/test_keyboard_control.py; scripts/blender_humanoid/twin_mcp_server.py; tests/acceptance/test_twin_mcp_server.py; scripts/blender_humanoid/physics_adapter.py; tests/acceptance/test_humanoid_physics.py"
         },
         {
           "name": "commit",
@@ -262,6 +272,11 @@
         {
           "name": "deliveryStatus",
           "value": "delivered"
+        },
+        {
+          "name": "commit",
+          "value": "28b7cc7",
+          "description": "P2-T3: physics_adapter.py added as the third (backend=sim) MuJoCo backend behind the UNCHANGED twin-control contract -- pose/motion/FK -> qpos/ctrl, MuJoCo qpos/qvel/contact -> contract state pushable to twin_server POST /bones for Blender feedback, manual drive_once headless; 9 contract motions drive w/o crash, idle/look/wave/relax/tpose/apose stand upright; files: scripts/blender_humanoid/physics_adapter.py, tests/acceptance/test_humanoid_physics.py"
         }
       ],
       "testcases": [
@@ -1340,6 +1355,15 @@
           "name": "commit",
           "value": "0827428",
           "description": "P2 physics breakdown plan + acceptance test; files: tests/acceptance/test_p2_physics_plan.py"
+        },
+        {
+          "name": "commit",
+          "value": "28b7cc7",
+          "description": "P2 T1/T2/T3 executed by robot-modeler; files: scripts/blender_humanoid/humanoid_spec.py, mjcf_generator.py, physics_adapter.py, build_humanoid.py, humanoid_control.py, assets/humanoid/humanoid.mjcf, tests/acceptance/test_humanoid_physics.py, tests/acceptance/test_humanoid_build.py"
+        },
+        {
+          "name": "taskProgress",
+          "value": "2026-09-02 commit 28b7cc7: T1(MJCF dual outlet + 104 axis assertions) DONE; T2(primitive colliders + chibi ballast, MuJoCo static standing upright, no divergence) DONE; T3(physics_adapter third backend, 9 motions drive w/o crash, idle/look/wave/relax/tpose/apose upright; walk/run/nod open-loop falls deferred to T4) DONE -> milestone M1 reached. Pending: T4(9 motions stable under physics), T5(contact/gait), T6(param sensitivity), T7(sim2real calibration), T8(Newton/Isaac tracking)."
         }
       ]
     }
