@@ -17,6 +17,16 @@ Run (bounded smoke: N frames then exit, prints SMOKE_JSON):
     python scripts/blender_humanoid/physics_twin_server.py --headless --frames 300
     python scripts/blender_humanoid/physics_twin_server.py --frames 90  # GUI probe
 
+Selectable models (--model, same HTTP contract either way):
+    python scripts/blender_humanoid/physics_twin_server.py --model unitree_h1
+  * humanoid (DEFAULT)   -- the chibi aBot (assets/humanoid/humanoid.mjcf)
+  * unitree_h1           -- MuJoCo Menagerie Unitree H1, a complete REAL
+                            humanoid (assets/menagerie/unitree_h1/scene.xml;
+                            fetch once with scripts/fetch_menagerie.py).
+                            Stands/idle/wave/look + raw joint FK by H1 joint
+                            names; walk/run/nod need a trained policy
+                            (honest boundary -- see menagerie_h1.py).
+
 Closed-loop balance (P2-T4, 2026-09-02): a BalanceController runs underneath
 the contract on every tick -- joint-level proportional ankle/hip/trunk
 feedback on pelvis tilt plus whole-body-COM-over-CoP regulation. It recovers
@@ -66,10 +76,25 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 import physics_adapter as pa  # noqa: E402
+import menagerie_h1 as h1  # noqa: E402
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8124  # Blender twin_server owns 8123; keep them separable
 TICK = pa.TICK       # 30 fps drive loop (contract tempo)
+
+# Selectable physics models behind the SAME twin-control contract.
+#   humanoid    -- our chibi aBot (assets/humanoid/humanoid.mjcf, default;
+#                  closed-loop balance + gait envelopes, P2-T4)
+#   unitree_h1  -- MuJoCo Menagerie Unitree H1 (assets/menagerie/unitree_h1/
+#                  scene.xml, fetched via scripts/fetch_menagerie.py): a
+#                  complete real humanoid standing via servo-rate position
+#                  actuators + a small stand holder; supports idle/wave/look
+#                  and raw joint FK; walk/run/nod need a trained policy
+#                  (honest boundary, see menagerie_h1.py).
+MODELS = {
+    "humanoid": lambda mjcf: pa.PhysicsAdapter(mjcf),
+    "unitree_h1": lambda mjcf: h1.H1Adapter(mjcf or h1.H1_SCENE),
+}
 # P2-T4: auto-reseat a fallen robot after this many seconds down (honest
 # kinematic recovery, not dynamic self-righting; see BalanceController).
 RESEAT_AFTER_S = 2.0
@@ -87,8 +112,11 @@ class PhysicsTwin(object):
     one thread so the simulation stays deterministic per tick.
     """
 
-    def __init__(self, adapter=None, mjcf_path=None):
-        self.adapter = adapter or pa.PhysicsAdapter(mjcf_path)
+    def __init__(self, adapter=None, mjcf_path=None, model="humanoid"):
+        """adapter: an injected backend (tests); else built from MODELS by
+        the `model` name ('humanoid' default keeps the chibi chain)."""
+        self.adapter = adapter or MODELS.get(model,
+                                             MODELS["humanoid"])(mjcf_path)
         self.cmd_queue = queue.Queue()
         self.state_cache = self.adapter.state()
         self._fallen_ticks = 0  # P2-T4 auto-reseat counter
@@ -354,10 +382,20 @@ def main(argv=None):
                    help="play this motion at start instead of a static pose")
     p.add_argument("--duration", type=float, default=3.0,
                    help="duration for --motion")
-    p.add_argument("--mjcf", default=None, help="MJCF path override")
+    p.add_argument("--mjcf", default=None,
+                   help="MJCF/scene path override for the selected model")
+    p.add_argument("--model", default="humanoid", choices=sorted(MODELS),
+                   help="physics model: humanoid (default, the chibi aBot) "
+                        "or unitree_h1 (MuJoCo Menagerie Unitree H1, real "
+                        "complete humanoid; fetch assets first: python "
+                        "scripts/fetch_menagerie.py)")
     args = p.parse_args(argv)
 
-    twin = PhysicsTwin(mjcf_path=args.mjcf)
+    try:
+        twin = PhysicsTwin(mjcf_path=args.mjcf, model=args.model)
+    except FileNotFoundError as exc:
+        print("physics_twin_server: %s" % exc, file=sys.stderr, flush=True)
+        return 1
 
     if args.frames is not None:
         # bounded smoke: seed an initial pose/motion so the state demonstrably
@@ -383,8 +421,8 @@ def main(argv=None):
         return 0 if ok else 1
 
     srv = start_http_server(twin, args.host, args.port)
-    print("PHYSICS_TWIN_SERVER up on http://%s:%d  model=%s  mode=%s"
-          % (args.host, args.port, twin.adapter.mjcf_path,
+    print("PHYSICS_TWIN_SERVER up on http://%s:%d  model=%s (%s)  mode=%s"
+          % (args.host, args.port, args.model, twin.adapter.mjcf_path,
              "headless" if args.headless else "gui"), flush=True)
     try:
         if args.headless:
@@ -397,10 +435,18 @@ def main(argv=None):
             finally:
                 stop_event.set()
         else:
-            print("watch the window: drag=orbit, scroll=zoom; closed-loop "
-                  "balance keeps it standing against moderate pushes; "
-                  "walk/run/nod play through the documented balance envelope "
-                  "(P2-T4)", flush=True)
+            if args.model == "unitree_h1":
+                print("watch the window: drag=orbit, scroll=zoom; the H1 "
+                      "stands via servo-rate position actuators + a stand "
+                      "holder; try /motion idle|wave|look and /bones with "
+                      "H1 joint names; walk/run/nod are NOT supported (need "
+                      "a trained policy) and backward pushes topple it "
+                      "(short heels -- honest physics)", flush=True)
+            else:
+                print("watch the window: drag=orbit, scroll=zoom; closed-loop "
+                      "balance keeps it standing against moderate pushes; "
+                      "walk/run/nod play through the documented balance "
+                      "envelope (P2-T4)", flush=True)
             run_gui(twin, frames=None)
     finally:
         srv.shutdown()

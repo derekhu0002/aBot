@@ -3,3 +3,13 @@ __pycache__/
 *.pyc
 *.blend1
 
+# MuJoCo runtime log
+MUJOCO_LOG.TXT
+
+# MuJoCo Menagerie heavy binary assets (~17 MB of meshes/docs images).
+# The model's text core (xml/LICENSE/README) is committed; the binaries are
+# fetched reproducibly by:  python scripts/fetch_menagerie.py --model <name>
+assets/menagerie/**/*.stl
+assets/menagerie/**/*.png
+
+
