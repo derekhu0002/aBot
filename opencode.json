@@ -5,6 +5,12 @@
       "type": "local",
       "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
       "enabled": true
+    },
+    "twin-physics": {
+      "type": "local",
+      "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
+      "environment": { "TWIN_PORT": "8124" },
+      "enabled": true
     }
   }
 }

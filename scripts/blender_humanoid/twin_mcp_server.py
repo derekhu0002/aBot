@@ -25,10 +25,20 @@ Testability: handlers call through a module-level injectable client.
 Tests inject a stub via set_client(stub) or create_server(client=stub) and
 assert forwarding without a real twin_server / network.
 
-Registered as the local MCP server "twin-control" in opencode.json:
-    {"mcp": {"twin-control": {"type": "local",
-      "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
-      "enabled": true}}}
+Registered in opencode.json as TWO parallel local MCP servers (same wrapper,
+different backend via the TWIN_PORT env var read by get_client):
+    {"mcp": {
+      "twin-control": {"type": "local",
+        "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
+        "enabled": true},                                   # Blender, :8123
+      "twin-physics": {"type": "local",
+        "command": ["python", "scripts/blender_humanoid/twin_mcp_server.py"],
+        "environment": {"TWIN_PORT": "8124"}, "enabled": true}}}  # MuJoCo
+
+When TWIN_PORT points away from the Blender default 8123 (e.g. 8124), the
+wrapper switches flavor: server name "twin-physics", MuJoCo physics-twin
+instructions, and the start hint points at physics_twin_server.py instead of
+the Blender twin_server.
 
 Run manually (stdio, blocks serving over stdin/stdout):
     python scripts/blender_humanoid/twin_mcp_server.py
@@ -57,21 +67,51 @@ VALID_BONES = frozenset((
 ))
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8123
-SERVER_START_HINT = (
-    "twin_server unreachable. Start it first (GUI Blender so you can watch "
-    "the model move):  blender --python scripts/blender_humanoid/twin_server.py"
-)
-SERVER_NAME = "twin-control"
 
-INSTRUCTIONS = (
-    "Control the aBot humanoid digital twin running in Blender via twin_server "
-    "(HTTP on 127.0.0.1:8123). Prerequisite: the twin server must be running — "
-    "start it with: blender --python scripts/blender_humanoid/twin_server.py. "
-    "Use health() to check reachability, pose()/motion() for high-level "
-    "animation, fk() for raw bone drives, state() to read back bone rotations, "
-    "stop() to halt. Every tool returns a dict with ok=true on success or "
-    "ok=false plus error/hint on failure."
-)
+# Backend flavor: opencode launches this wrapper twice -- as 'twin-control'
+# (Blender twin_server, default port 8123) and as 'twin-physics' (MuJoCo
+# physics_twin_server, TWIN_PORT=8124). When TWIN_PORT points away from the
+# Blender default, adapt the name/instructions/start hint so Agents always
+# get the right backend guidance. Import-time read: the MCP process receives
+# its environment from opencode.json before this module loads.
+_ENV_PORT = os.environ.get("TWIN_PORT", "").strip()
+PHYSICS_FLAVOR = _ENV_PORT not in ("", str(DEFAULT_PORT))
+
+if PHYSICS_FLAVOR:
+    SERVER_NAME = "twin-physics"
+    SERVER_START_HINT = (
+        "physics twin unreachable on port %s. Start it first (a MuJoCo "
+        "window opens so you can watch real physics):  "
+        "python scripts/blender_humanoid/physics_twin_server.py "
+        "(add --headless when there is no display)" % _ENV_PORT)
+    INSTRUCTIONS = (
+        "Control the aBot humanoid PHYSICS twin (MuJoCo real physics: "
+        "gravity/contacts/dynamics) via physics_twin_server (HTTP on port "
+        "%s). Prerequisite: the physics twin must be running — start it "
+        "with: python scripts/blender_humanoid/physics_twin_server.py. "
+        "Use health() to check reachability, pose()/motion() for high-level "
+        "animation, fk() for raw bone drives, state() to read back the "
+        "simulation state (bone rotations + root pose/contacts), stop() to "
+        "halt and re-seat the robot upright. Note: walk/run/nod are "
+        "open-loop playbacks (balance feedback is P2-T4), so the robot may "
+        "fall over — that is honest physics. Every tool returns a dict with "
+        "ok=true on success or ok=false plus error/hint on failure."
+        % _ENV_PORT)
+else:
+    SERVER_NAME = "twin-control"
+    SERVER_START_HINT = (
+        "twin_server unreachable. Start it first (GUI Blender so you can watch "
+        "the model move):  blender --python scripts/blender_humanoid/twin_server.py"
+    )
+    INSTRUCTIONS = (
+        "Control the aBot humanoid digital twin running in Blender via twin_server "
+        "(HTTP on 127.0.0.1:8123). Prerequisite: the twin server must be running — "
+        "start it with: blender --python scripts/blender_humanoid/twin_server.py. "
+        "Use health() to check reachability, pose()/motion() for high-level "
+        "animation, fk() for raw bone drives, state() to read back bone rotations, "
+        "stop() to halt. Every tool returns a dict with ok=true on success or "
+        "ok=false plus error/hint on failure."
+    )
 
 # Injectable client (testability). None => lazily build the real TwinClient
 # from the TWIN_HOST / TWIN_PORT environment variables on first use.
