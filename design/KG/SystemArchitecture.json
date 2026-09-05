@@ -836,7 +836,7 @@
         },
         {
           "name": "deliveryStatus",
-          "value": "delivered"
+          "value": "not_delivered"
         }
       ],
       "description": "aBot 技术洞察团队评估师（TAB 评审委员）：对技术情报卡做 Adopt/Trial/Assess/Caution 判定并给出理由与架构影响评估。模型 alibaba-cn/qwen3.8-max。对应 opencode agent 'tech-evaluator'（.opencode/agent/tech-evaluator.md）。稳定身份 tech-evaluator-001。",

@@ -11,5 +11,18 @@
     "failureError": "Command failed: python D:\\Projects\\aBot\\tests\\acceptance\\test_visual_analyst.py",
     "stdout": "FAIL:\r\n  - .opencode/agent/visual-analyst.md model = 'alibaba-cn/qwen3.8-flash', want 'alibaba-cn/qwen3.8-max'",
     "stderr": "Command failed: python D:\\Projects\\aBot\\tests\\acceptance\\test_visual_analyst.py"
+  },
+  {
+    "testcasename": "tech-evaluator-actor-opencode-agent-consistency",
+    "testdescription": "GIVEN aBot 意图图含技术评估师 Actor 且仓库含对应 opencode agent 定义 WHEN 校验二者一致性 THEN Actor 存在且类型为 Business Actor、agent 属性=tech-evaluator、model 属性=alibaba-cn/qwen3.8-max，且 .opencode/agent/tech-evaluator.md 存在且 frontmatter model 与 Actor 一致。",
+    "acceptanceCriteria": "tests/acceptance/test_tech_evaluator.py",
+    "relatedIntentElementId": "tech-evaluator-001",
+    "status": "failed",
+    "resolvedScriptPath": "tests/acceptance/test_tech_evaluator.py",
+    "executionCommand": "python tests/acceptance/test_tech_evaluator.py",
+    "exitCode": 1,
+    "failureError": "Command failed: python D:\\Projects\\aBot\\tests\\acceptance\\test_tech_evaluator.py",
+    "stdout": "FAIL:\r\n  - .opencode/agent/tech-evaluator.md model = 'alibaba-cn/qwen3.8-flash', want 'alibaba-cn/qwen3.8-max'",
+    "stderr": "Command failed: python D:\\Projects\\aBot\\tests\\acceptance\\test_tech_evaluator.py"
   }
 ]
